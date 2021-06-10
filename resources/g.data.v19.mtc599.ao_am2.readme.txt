@@ -1,0 +1,489 @@
+
+
+Experiment list...
+
+apr14a/
+First go at seeding anomalies in the global ocean.  
+In year 0295, ran with 5 ensembles, ensemble #1 was the 'control,' cycled every month, rescaling anomalies (or preturbations) to the original RMS at each layer, use rescale factors for temperature to rescale perturbations in other properties (salinity, surface height, u and v). 
+Took the restart field set from the ensemble directory and added the rescaled fields.  
+Continued for another year (0296), still cycling every month, though using the rescale factor for temperature at 200m to rescale all depths.  
+Took the restarts from the control ensemble, and added the rescaled fields; however, BGC and age tracer restarts taken from the ensemble restart set.  
+Hmmm, ensemble 5 crashed in 0296_02, and when I tried to repeat the experiment, I was unable to get identical results, something fishy...
+
+
+apr14b/
+Restart the ensemble.  
+Cycle for 3 months at a time.  Use the restarts from ensemble 1 at each cycle and rescale all depths with 200m temperatures(like apr14a for year 0296).  
+
+apr14c/
+Had troubles getting apr14b going with a 3-month cycle, so start again with a
+2-month cycle.  
+Start time is 0295-03-01 (beginning of a season).  
+(not rescaling eta with the run.csh used).  
+Did 12 cycles with 2 months (so 2 years).  
+Then try to continue another year with 3-month cycles (see if they are stable now... they are not)
+and also go back to rescaling each layer individual rather than the
+temperature at 195 metres to rescale the whole column.... eventually did 18
+cycles of 2 months (3 years).  
+At this point (5 years from start), switch off rescaling and start running
+each experiment free.  
+4 cycles of 3 months (1 year, cycles 31 to 34).  
+Then start doing 1-year cycles.  
+
+
+
+jun14a/
+Take a restart from rjm's account that is crashing, and try it out with the
+executable and scripts being used in apr14c.  
+The experiment crashes at the same point.  
+dt_ocean = 3600 is stable.  
+dt_ocean = 5400 becomes stable when barotropic split changed from 80 to 100.  
+
+Run for a few years to check the ocean stays stable.  
+
+jul14a/
+Start from apr14c/RESTART/cycle29/RESTART.1/  (0300-01-01) and run forward a
+bit with ACCESS parameters.  
+New input.nml file build in work0/  
+Crashed with 'saturation vapour pressure' error at 0305/01/13 21:00; set the
+barotropic_split to 100 and continue.  
+
+jun16_da0/
+Copy of ToK's data assimilation experiment.
+Ran one month.
+
+jun16_da1/
+An updated version of #0.  
+round0/
+Got this to run for several months.  
+
+Start again and go several years, saving restarts to use as climate forecasts....
+
+aug16c/
+(notes 16-aug)
+Take jun16_da1/round1/restart2013/ and let run free.
+
+aug16d/
+(notes 18-aug)
+Copy aug16c_da and run from jun16_da1/round1/restart2010/.  -> round0
+round1 from restart2011.
+round2 from restart2012.
+round3 (would have been, but never looked at and scrubbed, jan19) from restart2014.
+
+aug16f/
+Add ensemble generation (like done in apr14c, but use TOK's recent version) and apply around the output from jun16_da1/round2/.
+
+sep16f/
+A fresh, AO-coupled spinup.
+Start from World Ocean Atlas; turn on sponge-restoring for deeper than 2000m.  
+(see notes 21 September).  
+
+At 103-1-1, continue experiment with corrections to cm2_ice_bugs to .false., vertical grid to zstar, and smooth topography just at south pole. 
+Turn on ocean-BGC.
+Parmeters from global0p25-wombat experiment (jun16z).  Almost same as ACCESS-ESM (in oct16e), but wdetbio=27m/day rather than 36.0 in oct16e.  
+BGC IC from observations.  
+
+Oh crap....
+ao_am2 experiments have been missing surface_geopotential height (which is read in from fv_rst.res(.nc)).  
+out0/ contains first attempt at spinup without mountains.
+(will be interesting to see what this correction will do...).  
+
+Get atmospheric restart with proper surface_geopotential field from sep16f...
+
+sep16g/
+AO ensemble forecast system. 
+Spin off a series of free-running forecasts out of ensembles run in aug16f.  
+
+sep16i/
+spawn copy of fresh spinup, sep16f, and turn on atmospheric nudging.  
+AHHH, putting nudging together and notice the surface pressure is the same as sea-level-pressure; then recall a message on the mom5 email list about gfdl examples not including mountains in there files provided...
+(message from David Hutchinson, 22-Sep-2016)
+End up using sep16i to do short tests to confirm this.  
+Built new executables that wrote netcdf atmospheric restarts, modified them and saw that effect in the atmospheric output.  
+Use the atmospheric RESTART 2 days in (including surface_geopotential fields calculated in sep16i/work1/) as an initial condition for a restart of the 'clean' climate model spinup in sep16f.  
+
+Come back to sep16i to do 'nudging' after a new spinpu in sep16f (with mountains) is up to 0040. 
+Need to fix units of humidity, set limits of temperature to cover the full/most heights.  
+Nudging to T, Q, U and V.  Not Psurf at this stage (maybe nudging the column does the job).  
+Time scale is 90 days(?).  
+Nudging to climatology built in nudging_fields, 1990-2009.  
+
+Model crash at yr0066 when cell near Antarctic reaches minimum cell thickness.  
+Vertical grid is geopotential; switch to zstar (from 0064 restart).  
+
+oct16b/
+New spinup of ao_am2.  
+Copy sep16f (with mountains), now incorporate the namelist options from access-ocean model (turn off cm2_bugs in ice model for example!?).  
+Start running BGC as well!
+0028-1-1 switch wdetbio=27m/day
+0030-1-1 bulldoze topography over the South Pole.  
+0036-1-1 switch to albedo option 2, which should increase albedo for most of the ocean, maybe decrease temperatures.  
+
+OUTPUT/ has first 30 years of output.
+out0/
+out1/OUTPUT/ has another few decades of output (from 0030) with test of albedo option #2 (rest of nml based on access-o)
+out2/OUTPUT/ test the effect of changing nphys back to CM2.1 
+out3/OUTPUT/ test submesoscale (off in out3)
+
+plot1/plot.sst.jnl compare sst biases of various parameterisations.  
+
+
+
+oct16c/
+Copy oct16b and test number of cpus required to bring ocean-with-BGC up to same speed as am2 atmosphere model.  
+-> 128 cpus (30 for atmo, 98 = 7x14 for ocean) works good.
+
+... then use oct16c to test if smoothing topography at the south pole cleans up meridonal winds over Antarctica...
+work0/ smooth the grid over the south pole.  
+
+oct16d/
+New spinup of climate model.
+phys IC from bgc1/out2/restart700/
+bgc IC from bgc1/out2/restart700/
+atmo IC from sep16f/restart134/ (smooth topography at South Pole). 
+bgc_param from ACCESS-ESM.  
+Deep sponges off.
+input.nml from sep16f (CM2) with ice_cm2_bugs -> .false. and vertical_coordinate = "zstar"
+(Control 1)
+
+oct16e/
+Same as oct16d; put together for Lauren to copy
+
+oct16f/
+Same as oct16d, but with World Ocean Atlas IC from ocean and OBGC.  
+Ran ~50 years, made plot, looks fine, but not used.
+OUTPUT scrubbed.  (mac, aug17).  
+
+nov16a/
+Fresh data assimilation experiment using:
+- ensemble from sep16f/.
+- netcdf atmospheric restarts including topography.
+- turn cm2 bugs and switch to zstar.  
+
+nov16b/
+free running 'forecast' from 2013-1-1 of nov16a.
+
+nov16c/
+free running 'forecast' from 2010-1-1 of nov16a.
+
+nov16d/
+sandpit branch from sep16f/restart140/
+out0/ check zero_water_fluxes -> .true. set global eta to zero trend. NO CHANGE 
+out1/ slp2ocean -> ???? (other option)   .... interesting, ice still weighs on sea level. 
+out2/ check net_zero_water_coupler (reduces eta change, but doesn't affect exchange between ocean and ice).  
+out3/
+Use executable with modified albedo (and swith to ocean_albedo option 2).  
+Higher albedo in south ocean to drop SST and increase ice; lower values in north to avoid ice run away.  
+Tweak albedo again at 0149-01-01 (20161124).  (model had continued past this time yet crashed near end of 0151.)
+Tweak albedo again at 0173-01-01 (20161130).  Really only need ~15 years to see effect.  
+
+nov16e/
+Build ensemble around DA experiment in nov16a.  
+(like done in aug16f)
+
+nov16f/
+Ensemble forecast from nov16e (like sep16g before).  
+Started 2013-1-1 and went to 2017-1-1 with the original script.  
+Then, adapt script to use pbs job arrays.  
+
+feb17a/
+Control experiment with restoring below 2000 m.  
+Run by Lauren under /short/v14/lxs599/coupled_model/feb17a
+(Control 2)
+
+mar17a/
+Predictability experiment. Small perturbations (changes of order 0.01 degC to top of ocean)
+Run by Lauren under /short/v14/lxs599/coupled_model/mar17a
+
+Series of parameter tests to improve performance of coupled model; reduce biases.
+Using some of the namelist differences indicated/included on the email chain, last sent to mom5 mail list on 22-sept-2016.
+mar17m/ test changes to ice_model_nml
+mar17n/ test changes to ocean_vert_tidal_nml
+mar17p/ test changes to strat_cloud_nml (go to AM2.0 options for rthresh and eros_scale_c... probably make some biases worse, e.g. like the dry/clear Amazon?)
+(skip mar17o/ because looks bit like mar170/)
+
+apr17m/
+Quick test of system.  
+Re run the last cycle of sep16f (i.e. the restarts still in INPUT/). 
+Does it repeat the previous version.... YES! 
+(go ahead and delete most of the OUTPUT).  
+
+jun17m/
+Branch from lxs599/oct16e/restart0400/
+Modify ice_model_nml according to experience in may17m (notes 6-jun-17).  
+Run 50 years to check response of sth-ocn and sea ice; can sth sea-ice recover without too much in nth?
+
+jul17n/
+Start thinking about running an atmosphere-only configuration.  
+Still using the cm2.1 model but using the namelist to turn off the ocean and ice (will require boundary conditions to be provided by data_table presumably).  
+Start by copying sep16f (?) 
+Not actually run yet (26-jul-2017).
+
+jul17p/
+Simple Forecast/Hindcast (~Meehl approach). 
+Use ocean state from JRA55 experiment (run by RJM). 
+
+work[01]/ test bash scripts to call multiple mpirun calls within single large job.
+work2/ Calculate time series of various diagnostics.  
+Plot time series of ensembles and control for various indices.  
+work2a/ Calculate time series of climate indices with daily output. 
+work3/ Collate indices into single file and calculate model bias.  
+
+
+
+aug17m/
+Test options from ACCESS-ocean namelist, assess effect on ENSO variability (like had been doing in oct16b).  
+Take setup and initial condition (restart110) from recent control experiment.  
+out_/ blank experiment directory for copying.
+out0/ submeso ON
+out1/ biharmonic friction and vert mixing from ACCESS-ocean, 
+instability ~0028, dt_ocean=2400,dt_coupler, dt_atmo=1200 for few years, back to 3600/3600/1800 for 0032.
+out2/ form_drag on.  
+out3/ geopotential and convect on
+out4/ biharmonic friction.  At y0160, continue for another 30 years(?) with sponge layer properly enabled. 
+out5/ vert mix from access (oops, no horizontal friction on)
+out6/ vert mix from access
+out7/ biharmonic friction and ACCESS-vert mix BUT not tidal.  
+out8/ biharmonic friction (~out4) with modified ice_model_nml (~jun17m).  
+out9/ mom5 cm2 executable, tweak input.nml to work with mom5, otherwise no change cf out_ (feb17a). 
+out10/ simple copy of out_ and test repeatability of feb17a.  
+out11/ mom5 cm2 exec, same as out9, but with sponge on.
+
+aha, all these experiments have been missing *sponge_coeff.nc files, so sponge has not actually been applied (makes sense with output seen). 
+Fixed the links to sponge files while out8 is up to 0139, out9 to 0127. 
+Probably no effect on ENSO behaviour, but check with out8 (first half vs second half).    
+out11/ a fresh mom5 test (out9), with sponge files from the beginning. 
+
+
+aug17p/
+Test AO-AM2 with ACCESS-ESM namelist options. 
+Copy setup from feb17a control experiment.  
+Use options from ACCESS-ESM in /short/p66/txz599/work/PI-C2C-10C/OCN_RUNDIR/input.nml as much as possible. 
+BGC off. 
+Keep deep sponge ON. 
+Use cold start from feb17a.  
+
+instability in year 0005, swith to dt_ocean=2400 for a year.  
+ditto year 0006, tho leave dt_ocean=2400 forthe decade.  
+turn on convect in 0012-1-1 (might fix the salinity error that keeps cropping up. 
+.... doesn't work (out1)
+
+Turn on salt_sponge over Red Sea from 0010-1-1. 
+Need to keep time step at 2400 for stability.  
+Crash in Arabian Sea 0032-01.  
+Turn on salt_sponge over Arabian Sea and go back to restart30/.
+
+Got to 0100, model having trouble runing in 2018.  
+Consider switching to MOM5. 
+(logfiles overloaded with junk messages concerning temperature ranges, being mucked up by using conservative temperature; note, modifications required to input.nml; either attempt continuing experiment and start afresh).  
+(Ummm, just wondering.  When sponging to temperature at depth. Is CARS/WOA the right temperature? Potential versus in-situ?....
+Yes, work done in /Volumes/surf2/cha526/projects/auscom/sep16/interp0/build_rough.jnl).  
+
+mom5 running OK, dt_ocaen 2400 -> 3600 at 0029-1-1.  
+
+
+sep17n/ 
+quick test to check repeatability of feb17a experiment (having trouble repeating in aug17m).  
+
+sep17a/ (predictability experiment run by Lauren)
+work0/ diag_table for Lauren to use
+work1/ scripts to make diagnostics from all ensembles.  
+
+sep17b/
+New forecast experiment run by Lauren.  
+work0/ script to make diagnostics from all ensembles. 
+
+sep17q/
+See notes 22-sep. 
+Set up files under bitbucket.csiro.au/sm/df/model_workdir/
+Switch to mom5.
+New spin up with biharmonic friction and high ice albedo.  
+(experiment started as sep17b, but changed soon after starting).
+
+Stability issues in 0183, time step to 2400 for 0182 to 0187(?).
+Stability issues in 0342, time step to 2400. 
+(Control 3) 
+
+nov17m/
+Spawn a parallel control from sep17q at yr0200 with deep restoring on; however reduce the restoring time constant to 20 years.  
+Reduce time step (to 2400) for 0308/0309 for crash in 0309. (back to 3600 in y0318)
+
+nov17n/
+Set up for another series of tests of parameters, from yr0200 of sep17q.
+Base set up in out_/
+Each test built by copying out_/ to out*/ and making desired edit, and integrate for 40 years.  
+out0/ turn on Laplacian and biharmonic friction.  
+out1/ test default values of biharmonic friction rather than ACCESS values.  
+out2/ add tidal vertical mixing.
+out3/ switch from kpp_mom4p0 to kpp for vertical mixing, but keep same parameter values.
+Crashed in yr0227, reduce time step.  
+out4/ Use ACCESS vertical mixing like aug17m/out7/ (no tide), though use CM2.1 options for kpp (i.e. mom4p0).  
+out5/ access v. mix options with kpp_mom4p0
+out6/ GFDL v. mix plus tidal
+out7/ access v. mix option (~out5) with correct z scale values.
+out8/ Bryan-Lewis vert mix off, tidal on (~out2)
+out9/ Increase Richardson number in kpp_mom4p0 from .3 to .6 (source code states values up to 1.0 have been used). 
+out10/ Use Bryan-Lewis with values that halve the diffusivity in the upper ocean (tropical and extra-tropical) relative to CM2 (GFDL).  
+out11/ Short experiment, loading land in amazon with groundwater in IC.  
+out12/ Tweak the nphys, agm to 600
+out13/ kpp-ricr to 0.15 (like Harun tries in access).  
+...
+(several tests of GM parameters...)
+out14/ set aredi_equals_agm -> .true.
+out15/ set agm_closure_scaling = 0.5 (from 0.7)
+out16/ set agm_closure_scaling = 1.0
+out17/ set smax and swidth to default values (from 0.002)
+
+out18/ cold start of standard nov17n test (same TS and same grid, remove other restart files).
+out19/ cold start, change grid to ACCESS-CM.
+out20/ check a new executable updates from Nic's oceans-aus git-hub site. Test of ocean-only showed no change... 
+  Also check repeatability of executable's built with capability to modify ice albedo in each hemisphere seperately. 
+out21/ check a new execuatle that includes bg_diff changes, modifying background diffusivity like done in access experiments.  
+out22/ test different ice albedo's in Nth (~ sep15f/feb16a) and Sth (~ sep17q).  (notes 10-apr-2018).  
+out23/ test GFDL-CMIP5 atmo. "forcing" files. 
+(out24/ test on Pawsey)
+out25/ just run single year, no change to setup but turn on ozone diagnostics.  
+
+
+work0/ import ACCESS1.3 bathymetry into the cafe model.  
+
+
+jan18b/
+Continue feb17a (from copy of Lauren's workdir), with extra diagnostics, transport in density coordinates for Chris Chapman and Bernadette, and then some extra land diagnostics that were used in sep17q/  
+(notes 25-jan-2018).  
+
+mar18d/ (notes 23-mar-18)
+Test new mom5 executable (for ao-am2), from recent updates (was crashing in nov17n/out20/)
+Take sep17q IC, try exec compiled with traceback (MOM_compile.cm2_traceback.csh)...
+ran real slow, but didn't crash.  
+
+may18a/
+Initial candidate control, with changes to namelist based on experiences from nov17n tests:
+- agm_closure_scaling up to 0.14 (oops, only wanted 0.10 like nov17n/out16/, but there you go)
+- Brian-Lewis vertical mixing off (some background mix from kpp still).
+- biharmonic and laplacian friction on. 
+- different albedo north and south.  
+- critical Richardson number up to 0.6
+
+may18b/
+Like may18a, though update executable with same libraries used by Paul S. and align bathymetry with ACCESS1.3.  
+(Control 4)
+
+may18c/
+Like may18b, but 
+normal critical Richardson number (0.3) and biharmonic only.
+Instability: dt to 2400 for year 0036. 
+(Control 4)
+
+may18d/
+Like may18b, but
+normal agm_closure_scaling (0.07) and reduced/halved laplacian friction term, ksmag_iso (1.0)
+
+may18e/
+Mess around trying to run atmo-only experiment.  
+
+may18f/
+FLOR-access... (notes 30 May)
+Copying experiment set up from mom5/mar18a/ which ran the FLOR example case. 
+Notes on building the exchange grid for the access-ocean with am2.5 are on 29-May; work done in may18/work[12]/
+
+Losing water; problem with river model on the new grid. (out5/)  
+Tried do_rivers = false (year 0029), losing even more water
+Some hacking around with river_data.tile(s).nc; fregrid to put "suba" on a single regular grid for playing/testing with. 
+(6-jul-18) Leave rivers off; add runoff; set net water flux to zero.
+Need to clean up *0029*.nc and river data files so run_fregrid can work cleanly.  
+
+
+jun18a/
+Another control experiment with ACCESS-OM (Fabio) options.  
+Notes on 27-jun. 
+Have problems with salinity in the Red Sea.  
+salt_sfc_restore was not enough to fix, go instead to sponge.  
+6-jul, evening: crash...FATAL from PE    0: radiative_gases_mod 1: time after range of list
+Try removing dates in "dataset_entry" for each radiative gas which assigns gas time to initial model time. 
+
+jul18b/
+time varying atmospheric parameters (notes 6-jul).
+start 1980.  
+reduce time step (ocean 3600 -> 2400) for instability in year 1996.`
+
+jul18e/
+Copy of feb17a (control c2), to be continued for another 50 years with extra output surface pressure in the atmospheric output.
+
+aug18a/
+(control-5 => control-4 with deep restoring) 
+clone of the control may18b/ but with deep restoring.  
+Hiccup with CFC fixed at start of year 0244; CFC tracer field had been reset at year 0200, however the atmospheric boundary condition was not set to the century 0200 to 0299.  
+At 0244, reset tracer fields to zero and fix boundary condition.  
+(Control 5)
+
+aug18b/
+clone of jul18b (time varying atmospheric parameters), with the addition of volcanic time varying parameters affecting shortwave radiation.  
+
+flor/aug18c/
+New test of FLOR experiment with new executable that includes wind-enhanced mixing.  
+Same set up as may18f.  
+
+aug18d/
+Clone of feb17a, but with deep restoring turned off.  
+
+flor/sep18b/
+Branch from mar18a (FLOR example) and test wind-enhanced mixing.  
+
+sep18c/
+Test experiment directory put together for RASF to get a working version of the cafe climate model.  
+Set up copied from may18b (recent control with no deep restoring); however, executable here is different (different openMPI, netcdf libraries) so results not identical.   
+Cold start.  
+
+sep18c_rasf/ 
+To contain the plot directories that will point to the experiment that rasf ran.
+
+
+
+oct18a/ (see notes 3-oct)
+Branch from aug18a (control-5 => control-4 with deep restoring) at year 0180 and switch to updated atmospheric forcings (CMIP5/6, as implemented in test aug18b), including the updated CMIP6 ozone files tested by Mark Collier (mac599/ao_am2/sep18a/), but without interannual volcanic shortwave aerosols.  
+(control-6)
+Experiment continued by C.Chapman. 
+
+oct18b/
+For a moment in oct18a (from y0200), switched to kpp_mom4p1 scheme instead of kpp_mom4p0 (since RASF wind mixing works with kpp_mom4p1) to see if it modifies results.  (?) 
+(Was tested before in one of the nov17n tests, where started getting ENSO variability in late summer - Feb/Mar - which was not really desirable, so went back.
+But, set up has changed significantly since the base configuration of nov17n, so try again.  
+Didn't see anything straight away, but no detailed examination yet(?)).   
+
+oct18c/
+Redo oct18a with extra interannual options turned on (including volcanic aerosols). 
+Update to co2_obs.nc for ocean-OBGC.  
+(control 7(?))
+
+nov18a/ (notes, 22-nov)
+New sandpit/test bed, branch from oct18a at year 0265 (for 1988-like conditions, IPO in a postive phase, not on top of any significant ENSO event).  
+out0/ just one month; repeating oct18a as is (check!); some extra diagnostics on to compare/check handling of aerosols.  
+out1/ Just one month again; get ozone, aerosols and radiative gases from CM2 package (e.g. aug18a); extra aerosol diagnostics.  
+(went back and did a few years)
+out2/ use uniform sea ice albedo, increasing albedo in Arctic; run few years. 
+out3/ use CM2.1 version of ozone; run few years.  
+out4/ use CM2.1 version of aerosol.climatology.nc; run few years
+out5/ turn on volcanic forcing like used in oct18c, just use volcanic aerosols from 2008.  
+out6/ run year 2010 to test atmo aerosol file #1
+out7/ run year 2010 to test atmo aerosol file #2
+out8/ test higher snow conductivity.
+out9/ test higher kmelt (base of sea ice)
+out10/ test higher critical richardson number (to 1.0)
+out11/ test GOTM mixed layer scheme.  
+
+apr19b/
+Testing for cause of atmo problems over South Pole (seen in h500 and vref).  
+Take initial condition from cafe88 experiment, just from where it is up to (1990-11-01).
+Get set up from oct18c (which did not have the problem). 
+out0/ run 1 year as is, yes, get the problem as seen in cafe88. 
+out1/ 1-month test with smoother region over south pole. -> stripes
+out2/ get fv_rst.res.nc from oct18c/restart1990/. -> clean
+out3/ smaller time step. -> stripes
+out4/ put in U+V from oct18c -> stripes
+out5/ put in U+V+T+delP from oct18c -> clean
+out6/ put in delP from oct18c -> clean.... A-HA!
+
+oct19d/
+Quick tests trying to emulate problems that Terry is having with volcanic aerosols in CAFE-60 for the end of year 2010.  
+
