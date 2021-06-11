@@ -1,0 +1,271 @@
+#!/bin/bash
+
+#####################################################################
+# File: run_CAFE_forecasts.sh.in
+# Author: Vassili Kitsios adapted from Paul Sandery adapted from Pavel Sakov
+# Created: 2020
+# Purpose: input for BASH script for running CM21 forecasts on Gadi and Magnus
+# Description: the launching script lauch.sh converts this script into run_CAFE_forecasts.sh using settings from settings.sh
+# Dependencies: depends on a number of other scripts including run_mom.sh.in
+#####################################################################
+
+umask 027
+set -xeuEo pipefail
+function traperr
+{
+	echo "  ERROR TRAPPED at line $1"
+	kill 0 # kill the master shell and all subshells
+}
+trap 'traperr $LINENO' ERR
+
+#=======================================================================
+echo "Reading input parameters, setting dates and save directories. Date= "`date`
+	. settings.sh
+
+	export PATH="${PYTHON}:${PYTHON}/bin:${PATH}"
+	export PYTHONPATH="${PYTHONPATH}:${ZARR_PATH}"
+
+	# (( FORECAST_CYCLE_LEN_IN_MONTHS = FORECAST_CYCLE_LEN_IN_YEARS * 12 ))
+	# (( PER_RUN_FORECAST_CYCLE_LEN_IN_MONTHS = PER_RUN_FORECAST_CYCLE_LEN_IN_YEARS * 12 ))
+
+	MOMINPUT_DIR=${WDIR}/MOM/INPUT
+	POSTPROCESSING_LOGDIR=${WDIR}/postprocessing_logs
+	mkdir -p $POSTPROCESSING_LOGDIR
+	GITHUB_MESSAGE_DIR=${SAVE_DIR}/github_messages
+	mkdir -p $GITHUB_MESSAGE_DIR
+
+	# the analysis day of the current cycle ("_CA")
+	JULDAY_CA=`cat ${WDIR}/JULDAY.txt | head -1`
+	DATE_CA=`$dn2date $JULDAY_CA ${JULBASE}`
+	Y_CA=`echo $DATE_CA | cut -b1-4`
+	M_CA=`echo $DATE_CA | cut -b5-6`
+	D_CA=`echo $DATE_CA | cut -b7-8`
+	echo "  first day of this cycle = $DATE_CA"
+
+	cd ${WDIR}
+
+#=======================================================================
+# Write a small script for handling github messaging
+cat <<EOF > ${WDIR}/github_message.sh
+#!/bin/bash -l
+
+stage=\$1
+status=\$2
+
+export PATH="${PYTHON}:${PYTHON}/bin:${PATH}"
+python $POSTPROCESSING_SRCDIR/messaging/message.py \
+$GITHUB_MESSAGE_DIR \
+$EXPNAME \
+$WDIR \
+\$stage \
+\$status
+EOF
+chmod 775 ${WDIR}/github_message.sh
+
+#=======================================================================
+echo "At the first cycle : copy MOM input files ; copy ensemble of restarts. Date= "`date`
+if [ ! -d "${MOMINPUT_DIR}"  ] ; then
+	echo "starting INIT. DATE=" `date`
+	mkdir -p ${MOMINPUT_DIR}
+
+	# Set appropriate diag and field tables
+	for file in diag_table field_table ; do
+		ln -sf  ${REF_DIR}/MODEL/${file}_bgc ${REF_DIR}/MODEL/${file}
+	done
+
+	if [ $Y_CA -gt 2007 ]; then
+		ACO2_FILE='INPUT/co2_obs.padded.nc'
+	else
+		ACO2_FILE='INPUT/co2_obs.nc'
+	fi
+	cat ${REF_DIR}/MODEL/field_table | sed "s|ACO2_FILE|${ACO2_FILE}|" > ${REF_DIR}/MODEL/field_table.tmp
+	mv ${REF_DIR}/MODEL/field_table.tmp ${REF_DIR}/MODEL/field_table
+
+	cp ${MOM_BIN_DIR}/${EXECNAME} ${WDIR}/MOM/   # get local binary
+	cp ${MOM_SRC_DIR}/src/postprocessing/mppnccombine/mppnccombine ${WDIR}/MOM/   # get local binary 
+	for file in diag_table field_table data_table merge.sh input.in ; do
+		cp ${REF_DIR}/MODEL/${file} ${WDIR}/MOM
+	done
+	cp ${REF_DIR}/MODEL/run_mom.sh.in $WDIR
+	cp ${BASE_DIR}/INIT/STATIC/* ${MOMINPUT_DIR}
+	#JULDAY_CA=`cat ${WDIR}/JULDAY.txt | head -1`
+
+	# Copy initial ensemble
+	for (( mem1 = FIRST_MEMBER ; mem1 <= ENSSIZE; mem1 += NP_MASTER )) ; do
+		(( mem2 = mem1 + NP_MASTER - 1 ))
+		if (( mem2 > $ENSSIZE )) ; then
+			mem2=$ENSSIZE
+		fi
+		for (( mem = mem1; mem <= mem2; ++mem )) ; do
+			(
+			set -eu
+			memstr=`printf "mem%03d" $mem`
+			rm -rf ${WDIR}/${memstr}
+			mkdir -p ${WDIR}/${memstr}
+			mkdir -p ${WDIR}/${memstr}/INPUT
+			mkdir -p ${WDIR}/${memstr}/INPUT_SAVE
+			mkdir -p ${WDIR}/${memstr}/RESTART
+
+			cp ${BASE_DIR}/INIT/SPONGES/*.nc  ${WDIR}/${memstr}/INPUT
+		
+			if (( mem == 0 )) ; then
+				#-----------------------------------------------
+				# NOTE: Special case - ensemble mean restart
+				cp ${INITENSDIR_ENS_MEAN}/* ${WDIR}/${memstr}/INPUT
+				for filename in `ls ${WDIR}/${memstr}/INPUT/*.res.nc ${WDIR}/${memstr}/INPUT/*sponge.nc` ; do
+					python ${WDIR}/src/set_nan_to_zero.py $filename
+				done
+				#-----------------------------------------------
+			else	
+				cp ${INITENSDIR}/${memstr}/* ${WDIR}/${memstr}/INPUT
+			fi
+
+			cp ${REF_DIR}/INIT/RESTART/coupler.res.in  ${WDIR}/${memstr}/INPUT
+			for file in diag_table field_table data_table merge.sh mppnccombine ${EXECNAME} ; do
+				ln -s ${WDIR}/MOM/$file ${WDIR}/${memstr}
+			done
+
+			ln -sf ${MOMINPUT_DIR}/*  ${WDIR}/${memstr}/INPUT
+			rm ${WDIR}/${memstr}/INPUT/bgc_param.nc
+			if (( mem == 0 )) ; then
+				cp ${BGC_PARAM_DIR}/mem001.nc ${WDIR}/${memstr}/INPUT/bgc_param.nc
+			else	
+				cp ${BGC_PARAM_DIR}/${memstr}.nc ${WDIR}/${memstr}/INPUT/bgc_param.nc
+			fi
+
+			cat ${WDIR}/${memstr}/INPUT/coupler.res.in\
+				| sed "s|INPUT_YEAR|${Y_CA}|"\
+				| sed "s|INPUT_MONTH|${M_CA}|"\
+				| sed "s|INPUT_DAY|${D_CA}|"\
+				> ${WDIR}/${memstr}/INPUT/coupler.res
+
+			# Necessary to get files in the appropriate format post applying the increments from the DA system
+			nccopy -u ${WDIR}/${memstr}/INPUT/fv_rst.res.nc ${WDIR}/${memstr}/INPUT/fv_rst.res.nc2 
+			mv ${WDIR}/${memstr}/INPUT/fv_rst.res.nc2 ${WDIR}/${memstr}/INPUT/fv_rst.res.nc   
+			nccopy -u ${WDIR}/${memstr}/INPUT/atmos_tracers.res.nc ${WDIR}/${memstr}/INPUT/atmos_tracers.res.nc2 
+			mv ${WDIR}/${memstr}/INPUT/atmos_tracers.res.nc2 ${WDIR}/${memstr}/INPUT/atmos_tracers.res.nc
+
+			) &
+		done
+		wait
+	done
+fi
+
+
+#=======================================================================
+echo "Building namelist. DATE=" `date`
+	#aerosol forcing year  Y_CA=1988; AX=`echo "${Y_CA: -1}"` ;(( AYEAR = Y_CA - AX + 5 )); echo $AYEAR
+	AX=`echo "${Y_CA: -1}"`
+	(( AYEAR = Y_CA - AX + 5 ))
+	if [ $AYEAR -gt 2015 ]; then
+		AYEAR=2015
+	fi
+
+	if [ $Y_CA -gt 2000 ]; then
+		REPEAT_VOLCANO_YEAR='repeat_volcano_year=.true.'
+		VOLCANO_YEAR_USED='volcano_year_used = 2008,'
+	else
+		REPEAT_VOLCANO_YEAR='! repeat_volcano_year=.true.'
+		VOLCANO_YEAR_USED='! volcano_year_used = 2008,'
+	fi
+
+	ADAPT=.false.
+	JULBASE_YEAR=`echo $JULBASE | cut -b1-4`
+	JULBASE_MONTH=`echo $JULBASE | cut -b5-6`
+	JULBASE_DAY=`echo $JULBASE | cut -b7-8`
+
+	if [ $Y_CA -gt 2004 ]; then
+		BASIC_OZONE_TYPE=fixed_year
+		OZONE_DATASET_ENTRY='ozone_dataset_entry=2014, 1, 1, 0, 0, 0,'
+		FILENAME=cm3_2014_o3.padded.nc
+	else
+		BASIC_OZONE_TYPE=time_varying
+		OZONE_DATASET_ENTRY='!ozone_dataset_entry=2014, 1, 1, 0, 0, 0,'
+		FILENAME=CM3_CMIP6_1950-2014_O3.nc
+	fi
+
+	cat $WDIR/MOM/input.in \
+		| sed "s/INPUT_AEROSOL_TIME/${AYEAR}, 1, 1, 0, 0, 0/"\
+		| sed "s/INPUT_DAYS/days = 0/"\
+		| sed "s/CURRENT_DATE/current_date = ${JULBASE_YEAR},${JULBASE_MONTH},${JULBASE_DAY},0,0,0/"\
+		| sed "s/USE_ADAPTIVE_RESTORE/use_adaptive_restore=${ADAPT}/" \
+		| sed "s/REPEAT_VOLCANO_YEAR/${REPEAT_VOLCANO_YEAR}/" \
+		| sed "s/VOLCANO_YEAR_USED/${VOLCANO_YEAR_USED}/" \
+		| sed "s/BASIC_OZONE_TYPE/basic_ozone_type = '${BASIC_OZONE_TYPE}'/" \
+		| sed "s/OZONE_DATASET_ENTRY/${OZONE_DATASET_ENTRY}/" \
+		| sed "s/FILENAME/filename = "${FILENAME}"/" \
+		> $WDIR/MOM/input.nml
+
+
+#=======================================================================
+echo "Starting model propagation. DATE=" `date` 
+	# write MOM script
+	cd $WDIR
+	cp -f $HEADER_MOM ${WDIR}/run_mom.sh
+        cat ${WDIR}/run_mom.sh.in\
+                | sed "s|PYTHON_INPUT|${PYTHON}|"\
+                | sed "s|ZARR_PATH_INPUT|${ZARR_PATH}|"\
+                | sed "s|POSTPROCESSING_SRCDIR_INPUT|${POSTPROCESSING_SRCDIR}|"\
+                | sed "s|POSTPROCESSING_LOGDIR_INPUT|${POSTPROCESSING_LOGDIR}|"\
+                | sed "s|ZARR_CONFIG_FILE_INPUT|${ZARR_CONFIG_FILE}|"\
+		| sed "s|CHECK_CONFIG_FILE_INPUT|${CHECK_CONFIG_FILE}|"\
+                | sed "s|EXEC|${EXECNAME}|"\
+                | sed "s|ENSSIZE|${ENSSIZE}|"\
+                | sed "s|FIRST_MEMBER|${FIRST_MEMBER}|"\
+                | sed "s|DT_INPUT|\"${DT}\"|"\
+                | sed "s|WDIR_INPUT|\"${WDIR}\"|"\
+                | sed "s|SAVE_DIR_INPUT|\"${SAVE_DIR}\"|"\
+                | sed "s|MOM_COMMAND_INPUT|${MOM_COMMAND}|"\
+                | sed "s|TAPE_DIR_INPUT|${TAPE_DIR}|"\
+                | sed "s|MACHINE_INPUT|${machine}|"\
+                >> ${WDIR}/run_mom.sh
+
+	# launch jobs
+	for (( mem = FIRST_MEMBER; mem <= ENSSIZE; ++mem )) ; do
+		numstr=`printf "%03d" $mem`
+		memstr='mem'$numstr
+		if [ ! -f ${POSTPROCESSING_LOGDIR}/CHECK_${memstr}.done ] ; then
+			JOBNAME="${this_date_print}-${numstr}"
+			job_script_name="run_mom.${numstr}.sh"
+			cat ${WDIR}/run_mom.sh \
+				| sed "s|MEM1_INPUT|\"${mem}\"|"\
+				| sed "s|MONTHS_INPUT|${FORECAST_CYCLE_LEN_IN_MONTHS}|"\
+				| sed "s|MONTHS_PER_RUN_INPUT|${PER_RUN_FORECAST_CYCLE_LEN_IN_MONTHS}|"\
+			       	| sed "s|JOBNAME_INPUT|${JOBNAME}|"\
+			       	> ${WDIR}/${job_script_name}
+			if [ "${queue}" = "pbs" ] ; then
+				qsub ${job_script_name}
+			elif [ "${queue}" = "slurm" ] ; then
+				sbatch ${job_script_name} 
+			else
+				echo 'Unsupported queing system'
+				exit
+			fi
+		fi
+	done
+
+	echo -n "   All MOM jobs launched"
+
+#=======================================================================
+	if [ ! -f ${POSTPROCESSING_LOGDIR}/TAR_base.done ] ; then
+		${WDIR}/github_message.sh tar_base start
+	        # Skip slurm.out file for current job
+		tar -cvf ${SAVE_EXP_DIR}/${EXPNAME}-base.tar `ls $WDIR/*.* | grep -v slurm*.out` $WDIR/MOM $WDIR/ref $WDIR/src 
+		if [ "${machine}" = "gadi.nci.org.au" ] ; then
+			# submitted as a separate job
+			netcp -P v14 -C -N mdss-base -l other=mdss,storage=gdata/v14+gdata/xv83+scratch/ux06,mem=4Gb ${SAVE_EXP_DIR}/${EXPNAME}-base.tar ${TAPE_DIR}/
+		fi
+        	touch ${POSTPROCESSING_LOGDIR}/TAR_base.done
+		${WDIR}/github_message.sh tar_base success
+
+                #-------------------------------------------
+                # NOTE: How can we detect if tarring or tape archived failed?
+                #-------------------------------------------
+                # When we can, run the following to tell github
+                # ${WDIR}/github_message.sh tar_member fail
+                #-------------------------------------------
+	fi
+
+#=======================================================================
+# EOF
+#=======================================================================
