@@ -11,6 +11,6 @@ We currently have no such baseline for the CAFE forecast, which makes skill asse
 #### `notebooks/` : exploratory notebooks
  - `c5_f6_forcing.ipynb` : exploration of the forcings specified in the c5 control run and f6 forecast runs
 
-#### `run_scripts/` : scripts for setting up and running the historical runs
-
 #### `resources/` : copies of (small) files used in the notebooks in this repo, saved such that their original location is clear
+
+#### `run_scripts/` : scripts for setting up and running the historical runs
