@@ -1,0 +1,11 @@
+#!/bin/bash
+#SBATCH --time=24:00:00
+#SBATCH --nodes=1
+#SBATCH --account=pawsey0315
+
+echo $MODULE_VERSION
+source /opt/cray/pe/modules/default/init/bash
+
+module swap PrgEnv-cray PrgEnv-intel
+module load cray-netcdf
+module list

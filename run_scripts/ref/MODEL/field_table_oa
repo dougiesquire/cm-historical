@@ -1,0 +1,58 @@
+"diag_tracers","ocean_mod","frazil"
+restart_file = ocean_frazil.res.nc
+/
+"prog_tracers","ocean_mod","temp"
+horizontal-advection-scheme = mdfl_sweby
+vertical-advection-scheme = mdfl_sweby
+restart_file = ocean_temp_salt.res.nc
+/
+"prog_tracers","ocean_mod","salt"
+horizontal-advection-scheme = mdfl_sweby
+vertical-advection-scheme = mdfl_sweby
+restart_file = ocean_temp_salt.res.nc
+/
+"tracer_packages","ocean_mod","ocean_age_tracer"
+names = global
+horizontal-advection-scheme = mdfl_sweby
+vertical-advection-scheme = mdfl_sweby
+restart_file = ocean_age.res.nc
+min_tracer_limit=0.0
+/
+"namelists","ocean_mod","ocean_age_tracer/global"
+slat = -90.0
+nlat =  90.0
+wlon =   0.0
+elon = 360.0
+/
+
+
+"rayleigh_damp_table","ocean_mod","rayleigh_damp_table"
+"rayleigh","Ombai","itable=44,jtable=111,ktable_1=1,ktable_2=29,rayleigh_damp_table=5400"
+"rayleigh","Lombok","itable=36,jtable=112,ktable_1=1,ktable_2=19,rayleigh_damp_table=3600"
+"rayleigh","Torres","itable=62,jtable=105,ktable_1=1,ktable_2=50,rayleigh_damp_table=3600"
+"rayleigh","Torres","itable=62,jtable=106,ktable_1=1,ktable_2=50,rayleigh_damp_table=3600"
+"rayleigh","Torres","itable=62,jtable=107,ktable_1=1,ktable_2=50,rayleigh_damp_table=3600"
+"rayleigh","Torres","itable=62,jtable=108,ktable_1=1,ktable_2=50,rayleigh_damp_table=3600"/
+
+
+
+# specific humidity for moist runs
+ "TRACER", "atmos_mod", "sphum"
+           "longname",     "specific humidity"
+           "units",        "kg/kg"
+           "profile_type", "fixed", "surface_value=3.e-6" /
+# required by ESM
+  "TRACER", "land_mod", "sphum"
+           "longname",     "specific humidity"
+            "units",        "kg/kg" /
+# prognotic cloud scheme tracers
+  "TRACER", "atmos_mod", "liq_wat"
+            "longname",     "cloud liquid specific humidity"
+            "units",        "kg/kg" /
+  "TRACER", "atmos_mod", "ice_wat"
+            "longname",     "cloud ice water specific humidity"
+            "units",        "kg/kg" /
+  "TRACER", "atmos_mod", "cld_amt"
+            "longname",     "cloud fraction"
+            "units",        "none" /
+

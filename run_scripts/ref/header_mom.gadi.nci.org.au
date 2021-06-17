@@ -1,0 +1,14 @@
+#!/bin/bash
+#
+#PBS -S /bin/bash
+#PBS -q normal
+#PBS -l walltime=48:00:00
+#PBS -j oe
+#PBS -l mem=576GB
+#PBS -l ncpus=144
+#PBS -lstorage=gdata/v14+gdata/xv83+scratch/ux06
+##PBS -P v14
+#PBS -P xv83
+##PBS -P ux06
+#PBS -l jobfs=400GB
+#PBS -N JOBNAME_INPUT

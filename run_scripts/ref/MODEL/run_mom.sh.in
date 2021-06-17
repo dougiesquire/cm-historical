@@ -1,0 +1,384 @@
+# File: run_mom.sh.in
+# Purpose: input for BASH script for running MOM5 models
+# Author: Vassili Kitsios, modified from previous script of Pavel Sakov
+# Date: 2020
+
+set -euxEo pipefail
+ulimit -c unlimited
+export F_UFMTENDIAN=big
+
+module list
+
+#-------------------------------------------
+# Change the <DT> variable if need to reduce timestep due to numerical instability.
+DT=DT_INPUT  
+# Shorten the <months> variable if <DT> wass made smaller due to numerical instability 
+# and run time for full forecast too long to fit into maximim walltime.
+months=MONTHS_PER_RUN_INPUT
+#-------------------------------------------
+
+machine=MACHINE_INPUT
+WDIR=WDIR_INPUT
+SAVE_DIR=SAVE_DIR_INPUT
+mem=MEM1_INPUT
+months_orig=MONTHS_INPUT
+DT_orig=DT_INPUT
+
+PYTHON=PYTHON_INPUT
+POSTPROCESSING_SRCDIR=POSTPROCESSING_SRCDIR_INPUT
+POSTPROCESSING_LOGDIR=POSTPROCESSING_LOGDIR_INPUT
+ZARR_PATH=ZARR_PATH_INPUT
+ZARR_CONFIG_FILE=ZARR_CONFIG_FILE_INPUT
+
+EXPNAME=`basename ${WDIR}`
+SAVE_EXP_DIR=${SAVE_DIR}/${EXPNAME}
+TAPE_DIR=TAPE_DIR_INPUT
+ZARR_OUTPUT_PATH=${SAVE_EXP_DIR}/ZARR
+CHECK_CONFIG_FILE=CHECK_CONFIG_FILE_INPUT
+
+memstr=`printf "mem%03d" $mem`
+
+cd ${WDIR}/$memstr
+cp ${WDIR}/github_message.sh .
+
+#====================================================================
+# Check previous failures have been cleaned up
+#-------------------------------------------
+# NOTE: Need .failed files for TAR_${memstr}, TAPE_ARCHIVE_${memstr}, REGRID_${memstr}, ZARR_${memstr}, MERGE_${realm}
+#-------------------------------------------
+for prefix in MOM NETCDF_COMBINE CHECK; do
+	if [ -f "${POSTPROCESSING_LOGDIR}/${prefix}_${memstr}.failed" ]; then
+		echo Clean up $prefix for member $mem
+		exit
+	fi
+done
+
+for prefix in CHECK_MERGE; do
+	if [ -f "${POSTPROCESSING_LOGDIR}/${prefix}.failed" ]; then
+		echo Clean up $prefix
+		exit
+	fi
+done
+
+if [ -f ${WDIR}/STOP ] || [ -f ${WDIR}/STOP_${memstr} ] ; then
+    echo "STOP file detected, terminating"
+    exit 0
+fi
+
+
+#====================================================================
+if [ ! -f "${POSTPROCESSING_LOGDIR}/MOM_${memstr}.done" ]; then
+	# Build namelist
+	set +e
+	rm -f input.nml
+
+	if [ -f ${POSTPROCESSING_LOGDIR}/MOM_${memstr}.progress ] ; then
+		MONTHS_DONE=`cat ${POSTPROCESSING_LOGDIR}/MOM_${memstr}.progress | head -1`
+	else
+		MONTHS_DONE=0
+	fi
+
+        if (( MONTHS_DONE == 0 )) ; then
+		# first MOM cycle
+	       	THUMP=.true.
+        else
+		# restart from previous MOM cycle if needed to split into two jobs
+	       	THUMP=.false.
+        fi
+
+        if (( MONTHS_DONE + months > months_orig )) ; then
+		months=$((months_orig-MONTHS_DONE))
+	fi
+
+	cat ${WDIR}/MOM/input.nml \
+		| sed "s/.*dt_ocean.*/dt_ocean = ${DT}/"\
+	       	| sed "s/.*dt_cpld.*/dt_cpld = ${DT}/"\
+	       	| sed "s/.*dt_atmos.*/dt_atmos = ${DT}/"\
+		| sed "s/INPUT_MONTHS/months = ${months}/"\
+		| sed "s/USE_HARD_THUMP/use_hard_thump=${THUMP}/"\
+	       	> input.nml
+
+	# Launch MOM job
+	./github_message.sh ${memstr}_forecast start
+	MOM_COMMAND_INPUT ./EXEC  2>&1 | tee mom-${DT}.out
+
+	# Checck for successful completion
+	set -e
+        mom_complete_flag=`tail -n1 mom-${DT}.out | grep 'MPP_STACK high water mark=' | grep '0' | wc -l`
+        if (( mom_complete_flag == 1 )) ; then
+                echo "mom job complete"
+
+                # backup input files
+                mkdir -p INPUT_SAVE
+                files=`ls INPUT/*.res.nc*`
+                for file in $files ; do
+                        if [ -f "$file" ] ; then
+                                mv $file INPUT_SAVE
+                        fi
+                done
+                mv -f RESTART/* INPUT
+                rm -f INPUT/????????.??0000.*.nc
+                rm -f INPUT/????????.??0000.*.res
+
+		if (( months_orig == months )) ; then
+	                touch ${POSTPROCESSING_LOGDIR}/MOM_${memstr}.done
+			./github_message.sh ${memstr}_forecast success
+		else
+			(( MONTHS_DONE += months ))
+        		if (( MONTHS_DONE == months_orig )) ; then
+				rm ${POSTPROCESSING_LOGDIR}/MOM_${memstr}.progress
+	                	touch ${POSTPROCESSING_LOGDIR}/MOM_${memstr}.done
+				./github_message.sh ${memstr}_forecast success
+			else
+				echo ${MONTHS_DONE} > ${POSTPROCESSING_LOGDIR}/MOM_${memstr}.progress
+				echo "mom member $mem in progress and requires user verification and then relaunch, bailing out."
+				./github_message.sh ${memstr}_forecast progress
+				mv mom-${DT}.out mom-${DT}.out.${MONTHS_DONE}_months_done
+				cd ${WDIR}
+				if [ "${machine}" = "gadi.nci.org.au" ] ; then
+					qsub $0
+				elif [ "${machine}" = "magnus.pawsey.org.au" ] ; then
+					sbatch $0
+				fi
+				exit
+			fi
+		fi
+	else
+		echo "mom member $mem failed, bailing out."
+		touch ${POSTPROCESSING_LOGDIR}/MOM_${memstr}.failed
+		./github_message.sh ${memstr}_forecast fail
+		exit
+	fi
+fi
+
+if [ -f ${WDIR}/STOP ] || [ -f ${WDIR}/STOP_${memstr} ] ; then
+    echo "STOP file detected, terminating"
+    exit 0
+fi
+
+
+#====================================================================
+if [ -f "${POSTPROCESSING_LOGDIR}/MOM_${memstr}.done" ]; then
+	if [ ! -f "${POSTPROCESSING_LOGDIR}/NETCDF_COMBINE_${memstr}.done" ]; then
+        	./merge.sh
+	        if  stat -t *.nc.* >/dev/null 2>&1 ; then
+        	        touch ${POSTPROCESSING_LOGDIR}/NETCDF_COMBINE_${memstr}.failed
+			./github_message.sh ${memstr}_merge_netcdf start
+                	exit
+	        else
+        	        touch ${POSTPROCESSING_LOGDIR}/NETCDF_COMBINE_${memstr}.done
+			./github_message.sh ${memstr}_merge_netcdf success
+        	fi
+        fi
+fi
+
+if [ -f ${WDIR}/STOP ] || [ -f ${WDIR}/STOP_${memstr} ] ; then
+    echo "STOP file detected, terminating"
+    exit 0
+fi
+
+
+#====================================================================
+# Launch Tarring scripts
+if [ -f ${POSTPROCESSING_LOGDIR}/"NETCDF_COMBINE_${memstr}.done" ]; then
+        if [ ! -f "${POSTPROCESSING_LOGDIR}/TAR_${memstr}.done" ]; then
+		./github_message.sh ${memstr}_tar start
+		to_tar=${WDIR}/${memstr}
+		tar_name=${SAVE_EXP_DIR}/${EXPNAME}-${memstr}.tar
+		tar -cvf ${tar_name} ${to_tar}
+		if [ "${machine}" = "gadi.nci.org.au" ] ; then
+			# submitted as a separate job
+			netcp -P v14 -C -N mdss-${memstr} -l other=mdss,storage=gdata/xv83+gdata/v14+scratch/ux06,mem=4Gb ${SAVE_EXP_DIR}/${EXPNAME}-${memstr}.tar ${TAPE_DIR}/
+		fi
+		
+		# Check the size of the tar file
+		size_to_tar=$(du -sc --apparent-size "$to_tar" | tail -1 | cut -f 1)
+		size_tar=$(du -sc --apparent-size "$tar_name" | tail -1 | cut -f 1)
+		if [ "$size_tar" -ge "$size_to_tar" ]; then
+			touch ${POSTPROCESSING_LOGDIR}/TAR_${memstr}.done
+			./github_message.sh ${memstr}_tar success
+		else
+			touch ${POSTPROCESSING_LOGDIR}/TAR_${memstr}.failed
+			./github_message.sh ${memstr}_tar fail
+			echo "Size of tar file of member directory does not match size of input files, terminating"
+    			exit 0
+		fi
+	fi
+fi
+
+if [ -f ${WDIR}/STOP ] || [ -f ${WDIR}/STOP_${memstr} ] ; then
+    echo "STOP file detected, terminating"
+    exit 0
+fi
+
+
+#====================================================================
+# Launch Regridding scripts
+export PATH="${PYTHON}:${PYTHON}/bin:${PATH}"
+export PYTHONPATH="${PYTHONPATH}:${ZARR_PATH}"
+if [ -f ${POSTPROCESSING_LOGDIR}/"TAR_${memstr}.done" ]; then
+        if [ ! -f "${POSTPROCESSING_LOGDIR}/REGRID_${memstr}.done" ]; then
+		./github_message.sh ${memstr}_regrid start
+   		if [ "${machine}" = "gadi.nci.org.au" ] ; then
+                        cp -v ${POSTPROCESSING_SRCDIR}/1_regrid/REGRID_Gadi.sh ./REGRID.sh
+                elif [ "${machine}" = "magnus.pawsey.org.au" ] ; then
+                        cp -v ${POSTPROCESSING_SRCDIR}/1_regrid/REGRID_Magnus.sh ./REGRID.sh
+                else
+                        echo "I don't know which script to use to REGRID, terminating"
+                        exit 0
+                fi
+                ./REGRID.sh ./
+		touch ${POSTPROCESSING_LOGDIR}/REGRID_${memstr}.done
+		./github_message.sh ${memstr}_regrid success
+
+		#-------------------------------------------
+		# NOTE: How can we detect if regrid failed?
+		#-------------------------------------------
+		# When we can, run the following to tell github
+                # ./github_message.sh ${memstr}_regrid fail
+		#-------------------------------------------
+        fi
+fi
+
+if [ -f ${WDIR}/STOP ] || [ -f ${WDIR}/STOP_${memstr} ] ; then
+    echo "STOP file detected, terminating"
+    exit 0
+fi
+
+
+#====================================================================
+# Set up striping of ZARR output directory
+STRIPE_COUNT=30
+if [ ! -d $ZARR_OUTPUT_PATH ]; then 
+        mkdir $ZARR_OUTPUT_PATH
+        lfs setstripe --stripe-count $STRIPE_COUNT --stripe-size 1M $ZARR_OUTPUT_PATH
+elif (( `lfs getstripe -d $ZARR_OUTPUT_PATH | grep -oP "stripe_count:\s+\K[0-9]+"` != $STRIPE_COUNT )); then
+        echo "$ZARR_OUTPUT_PATH exists but is not striped correctly"
+        exit
+fi
+ZARR_MEM_PATH=${ZARR_OUTPUT_PATH}/${memstr}
+if [ ! -d $ZARR_MEM_PATH ]; then
+        mkdir $ZARR_MEM_PATH
+        lfs setstripe --stripe-count $STRIPE_COUNT --stripe-size 1M $ZARR_MEM_PATH
+elif (( `lfs getstripe -d $ZARR_MEM_PATH | grep -oP "stripe_count:\s+\K[0-9]+"` != $STRIPE_COUNT )); then
+        echo "$ZARR_MEM_PATH exists but is not striped correctly"
+        exit
+fi
+
+if [ -f ${WDIR}/STOP ] || [ -f ${WDIR}/STOP_${memstr} ] ; then
+    echo "STOP file detected, terminating"
+    exit 0
+fi
+
+
+#====================================================================
+# Launch zarring scripts
+if [ -f "${POSTPROCESSING_LOGDIR}/REGRID_${memstr}.done" ]; then
+        if [ ! -f "${POSTPROCESSING_LOGDIR}/ZARR_${memstr}.done" ]; then
+		./github_message.sh ${memstr}_zarr start
+                cp -v ${POSTPROCESSING_SRCDIR}/$ZARR_CONFIG_FILE .
+		cp ${POSTPROCESSING_SRCDIR}/2_zarrify/convert_forecast_to_zarr.py .
+		if [ "${machine}" = "gadi.nci.org.au" ] ; then
+			cp ${POSTPROCESSING_SRCDIR}/2_zarrify/ZARRIFY_Gadi.sh ./ZARRIFY.sh
+			jobfs_path=${PBS_JOBFS}/ZARR
+			PYTHON_PATH=$PYTHON ZARRTOOLS_PATH=$ZARR_PATH ./ZARRIFY.sh \
+                                $WDIR $ZARR_MEM_PATH "all" $mem $ZARR_CONFIG_FILE $jobfs_path \
+                                > ${POSTPROCESSING_LOGDIR}/ZARR_${memstr}.progress 2>&1
+		elif [ "${machine}" = "magnus.pawsey.org.au" ] ; then
+			cp ${POSTPROCESSING_SRCDIR}/2_zarrify/ZARRIFY_Magnus.sh ./ZARRIFY.sh
+			PYTHON_PATH=$PYTHON ZARRTOOLS_PATH=$ZARR_PATH ./ZARRIFY.sh \
+                                $WDIR $ZARR_MEM_PATH "all" $mem $ZARR_CONFIG_FILE \
+                                > ${POSTPROCESSING_LOGDIR}/ZARR_${memstr}.progress 2>&1
+		else
+                        echo "I don't know which script to use to ZARRIFY, terminating"
+                        exit 0
+                fi
+                chmod 775 $ZARR_MEM_PATH/*.zip
+		touch ${POSTPROCESSING_LOGDIR}/ZARR_${memstr}.done
+		./github_message.sh ${memstr}_zarr success
+
+		#-------------------------------------------
+		# NOTE: How can we detect if ZARR failed?
+		#-------------------------------------------
+		# When we can, runt the following to tell github
+                # ./github_message.sh ${memstr}_zarr fail
+		#-------------------------------------------
+        fi
+fi
+
+if [ -f ${WDIR}/STOP ] || [ -f ${WDIR}/STOP_${memstr} ] ; then
+    echo "STOP file detected, terminating"
+    exit 0
+fi
+
+
+#====================================================================
+# Launch checking scripts
+if [ -f "${POSTPROCESSING_LOGDIR}/ZARR_${memstr}.done" ]; then
+        if [ ! -f "${POSTPROCESSING_LOGDIR}/CHECK_${memstr}.done" ]; then
+		./github_message.sh ${memstr}_error_check start
+                cp -v ${POSTPROCESSING_SRCDIR}/$CHECK_CONFIG_FILE .
+                cp ${POSTPROCESSING_SRCDIR}/3_check/check_zarr_collections.py .
+		export PP_ZARR_PATH=$ZARR_MEM_PATH
+                export PP_CONFIG_PATH=$CHECK_CONFIG_FILE
+		pytest -v check_zarr_collections.py > ${POSTPROCESSING_LOGDIR}/CHECK_${memstr}.progress 2>&1
+                status=$?
+                if (( "$status" == "0" )); then
+                	touch ${POSTPROCESSING_LOGDIR}/CHECK_${memstr}.done
+			./github_message.sh ${memstr}_error_check success
+		else
+                	touch ${POSTPROCESSING_LOGDIR}/CHECK_${memstr}.failed
+			./github_message.sh ${memstr}_error_check fail
+                fi
+        fi
+fi
+
+if [ -f ${WDIR}/STOP ] || [ -f ${WDIR}/STOP_${memstr} ] ; then
+    echo "STOP file detected, terminating"
+    exit 0
+fi
+
+
+#====================================================================
+# Launch merge jobs
+num_complete=`ls ${POSTPROCESSING_LOGDIR}/CHECK_*.done | wc -l`
+if (( num_complete == ENSSIZE + 1 - FIRST_MEMBER )) ; then
+        paths_to_merge=( `ls -d ${ZARR_OUTPUT_PATH}/mem???` )
+        realms_as_separate_jobs=( atmos_daily atmos_isobaric_daily ocean_month ocean_bgc_month ) # all realms not specified here will be lumped into single additional job
+        exclude_realms=( ' ' ) # realms not to merge (e.g. if already done)
+        all_realms=$(python ${POSTPROCESSING_SRCDIR}/tools/parse_realms.py < "$ZARR_CONFIG_FILE")
+        remaining_realms=( `echo ${all_realms[@]} ${realms_as_separate_jobs[@]} ${exclude_realms[@]} | tr ' ' '\n' | sort | uniq -u` )
+        n_merge_jobs=$((${#realms_as_separate_jobs[@]} + 1))
+	TAR_LOG_DIR=${SAVE_EXP_DIR}/${EXPNAME}-logs.tar
+	cp -v ${POSTPROCESSING_SRCDIR}/$CHECK_CONFIG_FILE .
+	cp ${POSTPROCESSING_SRCDIR}/2_zarrify/merge_zarr_members.py .
+	cp ${POSTPROCESSING_SRCDIR}/3_check/check_zarr_collections.py .
+	if [ "${machine}" = "gadi.nci.org.au" ] ; then
+		cp ${POSTPROCESSING_SRCDIR}/2_zarrify/MERGE_Gadi.sh ./MERGE.sh
+	elif [ "${machine}" = "magnus.pawsey.org.au" ] ; then
+		cp ${POSTPROCESSING_SRCDIR}/2_zarrify/MERGE_Magnus.sh ./MERGE.sh
+	else
+		echo "I don't know which script to use to MERGE, terminating"
+		exit 0
+	fi
+        for realm in ${realms_as_separate_jobs[@]}; do
+                if [ ! -f "${POSTPROCESSING_LOGDIR}/MERGE_${realm}.done" ]; then
+                        if [ "${machine}" = "gadi.nci.org.au" ] ; then
+				qsub -v "PATHS_TO_MERGE=$(echo ${paths_to_merge[@]}), ZARR_PATH=${ZARR_OUTPUT_PATH}, REALMS=$realm, N_MERGE_JOBS=$n_merge_jobs, ZARR_CONFIG_FILE=$ZARR_CONFIG_FILE, CHECK_CONFIG_FILE=$CHECK_CONFIG_FILE, LOG_DIR=$POSTPROCESSING_LOGDIR, TAR_LOG_DIR=$TAR_LOG_DIR, TAPE_DIR=$TAPE_DIR, PYTHON_PATH=$PYTHON, ZARRTOOLS_PATH=$ZARR_PATH" ./MERGE.sh
+			elif [ "${machine}" = "magnus.pawsey.org.au" ] ; then
+				sbatch --export="PATHS_TO_MERGE=$(echo ${paths_to_merge[@]}),ZARR_PATH=${ZARR_OUTPUT_PATH},REALMS=$realm,N_MERGE_JOBS=$n_merge_jobs,ZARR_CONFIG_FILE=$ZARR_CONFIG_FILE,CHECK_CONFIG_FILE=$CHECK_CONFIG_FILE,LOG_DIR=$POSTPROCESSING_LOGDIR,TAR_LOG_DIR=$TAR_LOG_DIR,PYTHON_PATH=$PYTHON,ZARRTOOLS_PATH=$ZARR_PATH" ./MERGE.sh	
+                	fi
+		fi
+        done
+        if [ ! -f "${POSTPROCESSING_LOGDIR}/MERGE_${remaining_realms%% *}.done" ]; then
+                if [ "${machine}" = "gadi.nci.org.au" ] ; then
+			qsub -v "PATHS_TO_MERGE=$(echo ${paths_to_merge[@]}), ZARR_PATH=${ZARR_OUTPUT_PATH}, REALMS=$(echo ${remaining_realms[@]}), N_MERGE_JOBS=$n_merge_jobs, ZARR_CONFIG_FILE=$ZARR_CONFIG_FILE, CHECK_CONFIG_FILE=$CHECK_CONFIG_FILE, LOG_DIR=$POSTPROCESSING_LOGDIR, TAR_LOG_DIR=$TAR_LOG_DIR, TAPE_DIR=$TAPE_DIR, PYTHON_PATH=$PYTHON, ZARRTOOLS_PATH=$ZARR_PATH" ./MERGE.sh
+		elif [ "${machine}" = "magnus.pawsey.org.au" ] ; then
+			sbatch --export="PATHS_TO_MERGE=$(echo ${paths_to_merge[@]}),ZARR_PATH=${ZARR_OUTPUT_PATH},REALMS=$(echo ${remaining_realms[@]}),N_MERGE_JOBS=$n_merge_jobs,ZARR_CONFIG_FILE=$ZARR_CONFIG_FILE,CHECK_CONFIG_FILE=$CHECK_CONFIG_FILE,LOG_DIR=$POSTPROCESSING_LOGDIR,TAR_LOG_DIR=$TAR_LOG_DIR,PYTHON_PATH=$PYTHON,ZARRTOOLS_PATH=$ZARR_PATH" ./MERGE.sh 
+                fi
+        fi
+fi
+
+#====================================================================
+# EOF
+#====================================================================
