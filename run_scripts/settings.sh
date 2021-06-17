@@ -4,9 +4,9 @@
 DESCRIPTION='CAFE-60 historical run'
 
 ENSSIZE=1
-FORECAST_CYCLE_LEN_IN_MONTHS=30
+FORECAST_CYCLE_LEN_IN_MONTHS=960 # (8*120) to get to 2040
 PER_RUN_FORECAST_CYCLE_LEN_IN_MONTHS=120 # for when walltime limit is insufficient to run all forecast month (Gadi can run 10 years @ DT=1800 in 48 hour limit, Magnus can run 5 years @ DT=1800 in 24 hour limit)
-suffix=''  # In definition of experiment name
+suffix='_historical'  # In definition of experiment name
 
 #FIRST_MEMBER=0  # also launch the forecasts using the ensemble mean as an initial condition
 FIRST_MEMBER=1
@@ -14,7 +14,8 @@ FIRST_MEMBER=1
 ZARR_CONFIG_FILE=zarr_specs_CAFE-f6.json
 CHECK_CONFIG_FILE=check_specs_CAFE-f6.json
 
-#this_date=" 1960  1 1"
+this_date=" 1960  11 1"
+JULBASE="1800 1 1"
 
 #=======================================================================
 # Important directories
@@ -23,8 +24,8 @@ if [ "${HOSTNAME:0:1}" = "g" ] ; then
         machine='gadi.nci.org.au'
         data_mover="${USER}@gadi-dm.nci.org.au"
         MOM_SRC_DIR="/home/548/pas548/src/mom_cafe"
-        OUTPUT_DIR="/scratch/ux06/ds0092/CAFE/forecasts/f6/WIP/"
-       	SAVE_DIR="/g/data/xv83/ds0092/CAFE/forecasts/f6/WIP/"
+        OUTPUT_DIR="/scratch/ux06/ds0092/CAFE/historical/WIP/"
+       	SAVE_DIR="/g/data/xv83/ds0092/CAFE/historical/WIP/"
         INITENSDIR_BASE="/g/data/xv83/ds0092/CAFE/data_assimilation/d60/save"
         BASE_DIR="/g/data/v14/vxk563/CAFE/CM21_c5"
         NP_MASTER=48
