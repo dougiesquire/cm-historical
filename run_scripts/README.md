@@ -1,20 +1,14 @@
-CAFE-60 forecast script
+Historical run scripts
 ============================================================================
 
-* Runs CAFE-60 ETKF forecasts
+The historical runs are simply run as a long forecast from the 1960-11-01 CAFE60 restarts (I tried starting from 1960-01-01 but the model was not happ with these restarts). The hope is that by 1980, when I plan to start using the data as a baseline for the forecasts, all members will be completely independent. 
+
+Hence these scripts are simply a replica of https://github.com/csiro-dcfp/cm-forecasts, with some slight changes to `settings.sh`.
 
 
-Installation instructions
+Notes
 ----------------------------------------------------------------------
 
-1) pull from master repo and checkout reanalysis branch
-	
-        git clone https://github.com/csiro-dcfp/cm-forecasts.git
-
-2) In "settings.sh' make the required settings changes (e.g. date).
-
-3) Run from the base directory using
-
-	`./launch`
+* Begin by running a single member (mem001) and a corresponding control run with fixed 1960 forcing. We are expecting to see some transient behaviour in the early years of the forecast given that c5 is run with 1990s forcing and CAFE60 is started in 1960. Comparison of mem001 and it's control run should give an indication of how long this transient behaviour persists.
 
 
