@@ -69,7 +69,7 @@
     lw_asy_root = "     "
     lw_ssa_filename = "             "
     lw_ssa_root = "     "
-    using_volcanic_sw_files = .true.,
+    USE_VOLCANIC_SW_FILES    
     sw_ext_filename = "extsw_data.nc"
     sw_ext_root = "extsw"
     sw_ssa_filename = "omgsw_data.nc"
