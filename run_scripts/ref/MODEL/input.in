@@ -1016,7 +1016,7 @@
        n2o_specification_type = 'time_series'
        n2o_data_source = 'input'
 
-       TIME_VARYING_F11
+       TIME_VARYING_F_11
        f11_variation_type = 'linear'
        F11_DATASET_ENTRY
        f11_specification_type = 'time_series'

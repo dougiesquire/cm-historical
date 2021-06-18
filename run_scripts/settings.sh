@@ -6,7 +6,7 @@ DESCRIPTION='CAFE-60 historical run'
 ENSSIZE=1
 FIRST_MEMBER=1
 
-CONTROL=true # Keep forcing fixed
+CONTROL=false # Keep forcing fixed
 
 FORECAST_CYCLE_LEN_IN_MONTHS=960 # (8*120) to get to 2040 from 1960
 PER_RUN_FORECAST_CYCLE_LEN_IN_MONTHS=120 # not used if CONTROL=false, in which case cycle lengths are determined from YEARS_TO_UPDATE_NAMELIST 

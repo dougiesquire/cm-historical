@@ -186,7 +186,7 @@ echo "Building namelists. DATE=" `date`
                         CH4_DATASET_ENTRY='ch4_dataset_entry = '"${Y_CA}"',1,1,0,0,0,'
 			TIME_VARYING_N2O='time_varying_n2o = .false.,'
                         N2O_DATASET_ENTRY='n2o_dataset_entry = '"${Y_CA}"',1,1,0,0,0,'
-			TIME_VARYING_F11='time_varying_f11 = .false.,'
+			TIME_VARYING_F_11='time_varying_f11 = .false.,'
                         F11_DATASET_ENTRY='f11_dataset_entry = '"${Y_CA}"',1,1,0,0,0,'
 			TIME_VARYING_F12='time_varying_f12 = .false.,'
                         F12_DATASET_ENTRY='f12_dataset_entry = '"${Y_CA}"',1,1,0,0,0,'
@@ -223,14 +223,14 @@ echo "Building namelists. DATE=" `date`
 		                FILENAME=CM3_CMIP6_1950-2014_O3.nc
 		        fi
 
-			 # DTS: had to add this so that can turn off in control run -----
+			# DTS: had to add this so that can turn off in control run -----
 			TIME_VARYING_CO2='time_varying_co2 = .true.,'
                         CO2_DATASET_ENTRY='! co2_dataset_entry = XXXX,1,1,0,0,0,'
                         TIME_VARYING_CH4='time_varying_ch4 = .true.,'
                         CH4_DATASET_ENTRY='! ch4_dataset_entry = XXXX,1,1,0,0,0,'
                         TIME_VARYING_N2O='time_varying_n2o = .true.,'
                         N2O_DATASET_ENTRY='! n2o_dataset_entry = XXXX,1,1,0,0,0,'
-                        TIME_VARYING_F11='time_varying_f11 = .true.,'
+                        TIME_VARYING_F_11='time_varying_f11 = .true.,'
                         F11_DATASET_ENTRY='! f11_dataset_entry = XXXX,1,1,0,0,0,'
                         TIME_VARYING_F12='time_varying_f12 = .true.,'
                         F12_DATASET_ENTRY='! f12_dataset_entry = XXXX,1,1,0,0,0,'
@@ -261,7 +261,7 @@ echo "Building namelists. DATE=" `date`
 			| sed "s/CH4_DATASET_ENTRY/${CH4_DATASET_ENTRY}/" \
 			| sed "s/TIME_VARYING_N2O/${TIME_VARYING_N2O}/" \
 			| sed "s/N2O_DATASET_ENTRY/${N2O_DATASET_ENTRY}/" \
-			| sed "s/TIME_VARYING_F11/${TIME_VARYING_F11}/" \
+			| sed "s/TIME_VARYING_F_11/${TIME_VARYING_F_11}/" \
 			| sed "s/F11_DATASET_ENTRY/${F11_DATASET_ENTRY}/" \
 			| sed "s/TIME_VARYING_F12/${TIME_VARYING_F12}/" \
 			| sed "s/F12_DATASET_ENTRY/${F12_DATASET_ENTRY}/" \
