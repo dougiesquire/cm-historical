@@ -92,6 +92,7 @@ if [ "$CONTROL" = true ] ; then
 	forecast_name=ctrl
 else
 	forecast_name=hist
+fi
 contact_name="Dougie Squire"
 # Note, need to update references with CAFE-60 paper once published.
 references="O'Kane, T.J., Sandery, P.A., Monselesan, D.P., Sakov, P., Chamberlain, M.A., Matear, R.J., Collier, M., Squire, D. and Stevens, L., 2019, 'Coupled data assimilation and ensemble initialisation with application to multi-year ENSO prediction', Journal of Climate."
