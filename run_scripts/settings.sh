@@ -23,15 +23,13 @@ JULBASE="1800 1 1"
 #=======================================================================
 # Update PER_RUN_FORECAST_CYCLE_LEN_IN_MONTHS to be an array for each run
 if [ "$CONTROL" = true ] ; then
-	sum=0
+	sum=$PER_RUN_FORECAST_CYCLE_LEN_IN_MONTHS
 	t=()
 	while [ $sum -lt $FORECAST_CYCLE_LEN_IN_MONTHS ]; do 
-		t+=("${PER_RUN_FORECAST_CYCLE_LEN_IN_MONTHS}")
+		t+=("${sum}")
 		sum=$((sum + $PER_RUN_FORECAST_CYCLE_LEN_IN_MONTHS))
 	done
-	if [ $sum -ne $FORECAST_CYCLE_LEN_IN_MONTHS ]; then
-		t[-1]=$(($PER_RUN_FORECAST_CYCLE_LEN_IN_MONTHS-$sum+$FORECAST_CYCLE_LEN_IN_MONTHS))
-	fi
+	t+=("$FORECAST_CYCLE_LEN_IN_MONTHS")
 	unset PER_RUN_FORECAST_CYCLE_LEN_IN_MONTHS	
 	PER_RUN_FORECAST_CYCLE_LEN_IN_MONTHS=${t[@]}
 else

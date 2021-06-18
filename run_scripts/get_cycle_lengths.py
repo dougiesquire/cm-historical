@@ -3,6 +3,14 @@
 import sys
 import datetime
 
+
+def cumsum(l):
+    t = 0
+    for x in l:
+        t += x
+        yield t
+
+
 if __name__ == '__main__':
         if (len(sys.argv)<4):
                 print("   Invalid number of arguments.")
@@ -21,4 +29,4 @@ if __name__ == '__main__':
             num_months.append((end_date.year - start_date.year) * 12 + (end_date.month - start_date.month))
             start_date = end_date
         num_months.append(int(run_length) - sum(num_months))
-        print(' '.join([str(n) for n in num_months]))
+        print(' '.join([str(n) for n in cumsum(num_months)]))
