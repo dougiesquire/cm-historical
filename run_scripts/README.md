@@ -1,9 +1,9 @@
 Historical run scripts
 ============================================================================
 
-The historical runs are simply run as a long forecast from the 1960-11-01 CAFE60 restarts (I tried starting from 1960-01-01 but the model was not happ with these restarts). The hope is that by 1980, when I plan to start using the data as a baseline for the forecasts, all members will be completely independent. 
+The "historical run" is simply run as a long set of forecasts from the 1960-11-01 CAFE60 restarts (I tried starting from 1960-01-01 but the model was not happy with these restarts). The hope is that by 1981, when I plan to start using the data as a baseline for the forecasts, all members will be independent. 
 
-Hence these scripts are simply a replica of https://github.com/csiro-dcfp/cm-forecasts, with some slight changes to `settings.sh`.
+Hence these scripts are hacked versions of https://github.com/csiro-dcfp/cm-forecasts.
 
 
 Notes
