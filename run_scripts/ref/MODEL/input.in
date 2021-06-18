@@ -996,40 +996,47 @@
        verbose = 3
        gas_printout_freq = 240
 
-       time_varying_co2 = .true.,
+       TIME_VARYING_CO2
        co2_variation_type = 'linear',
+       CO2_DATASET_ENTRY
        co2_specification_type = 'time_series',
        co2_floor = 100.0E-06,
        co2_ceiling = 1600.0E-06,
        co2_data_source = 'input'
 
-       time_varying_ch4 = .true.,
+       TIME_VARYING_CH4
        ch4_variation_type = 'linear'
+       CH4_DATASET_ENTRY
        ch4_specification_type = 'time_series'
        ch4_data_source = 'input'
 
-       time_varying_n2o = .true.,
+       TIME_VARYING_N2O
        n2o_variation_type = 'linear'
+       N2O_DATASET_ENTRY
        n2o_specification_type = 'time_series'
        n2o_data_source = 'input'
 
-       time_varying_f11 = .true.,
+       TIME_VARYING_F11
        f11_variation_type = 'linear'
+       F11_DATASET_ENTRY
        f11_specification_type = 'time_series'
        f11_data_source = 'input'
 
-       time_varying_f12 = .true.,
+       TIME_VARYING_F12
        f12_variation_type = 'linear'
+       F12_DATASET_ENTRY
        f12_specification_type = 'time_series'
        f12_data_source = 'input'
 
-       time_varying_f113 = .true.,
+       TIME_VARYING_F113
        f113_variation_type = 'linear'
+       F113_DATASET_ENTRY
        f113_specification_type = 'time_series'
        f113_data_source = 'input'
 
-       time_varying_f22 = .true.,
+       TIME_VARYING_F22
        f22_variation_type = 'linear'
+       F22_DATASET_ENTRY
        f22_specification_type = 'time_series'
        f22_data_source = 'input'
 /

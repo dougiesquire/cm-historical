@@ -157,15 +157,17 @@ fi
 #=======================================================================
 echo "Building namelists. DATE=" `date`
 	# Build a different namelist for each block of a forecast
-	NML_YEARS=( `echo $this_date_print | cut -b1-4` ${YEARS_TO_UPDATE_NAMELIST[@]} )
+	START_DATE=`echo $this_date_print | cut -b1-4`
 	NML_CYCLE_LENS=( 0 ${PER_RUN_FORECAST_CYCLE_LEN_IN_MONTHS[@]} )
-	
-	for i in "${!NML_YEARS[@]}"; do
+	NML_YEARS=( ${START_DATE} ${YEARS_TO_UPDATE_NAMELIST[@]} )
+	(( n_blocks = ${#NML_CYCLE_LENS[@]} - 2 ))
+
+	for i in $(seq 0 $n_blocks); do
 	        namelist_name="${NML_CYCLE_LENS[i]}"-"${NML_CYCLE_LENS[((i+1))]}"
 	
 		if [ "$CONTROL" = true ] ; then
 			# Fixed forcing for all blocks of forecast -----
-			Y_CA=${NML_YEARS[0]}
+			Y_CA=${START_DATE}
 
 			AX=`echo "${Y_CA: -1}"`
                         (( AYEAR = Y_CA - AX + 5 ))
@@ -177,8 +179,23 @@ echo "Building namelists. DATE=" `date`
 			BASIC_OZONE_TYPE=fixed_year
                         OZONE_DATASET_ENTRY='ozone_dataset_entry='"${Y_CA}"', 1, 1, 0, 0, 0,'
 			FILENAME=CM3_CMIP6_1950-2014_O3.nc
+
+			TIME_VARYING_CO2='time_varying_co2 = .false.,'
+			CO2_DATASET_ENTRY='co2_dataset_entry = '"${Y_CA}"',1,1,0,0,0,'
+			TIME_VARYING_CH4='time_varying_ch4 = .false.,'
+                        CH4_DATASET_ENTRY='ch4_dataset_entry = '"${Y_CA}"',1,1,0,0,0,'
+			TIME_VARYING_N2O='time_varying_n2o = .false.,'
+                        N2O_DATASET_ENTRY='n2o_dataset_entry = '"${Y_CA}"',1,1,0,0,0,'
+			TIME_VARYING_F11='time_varying_f11 = .false.,'
+                        F11_DATASET_ENTRY='f11_dataset_entry = '"${Y_CA}"',1,1,0,0,0,'
+			TIME_VARYING_F12='time_varying_f12 = .false.,'
+                        F12_DATASET_ENTRY='f12_dataset_entry = '"${Y_CA}"',1,1,0,0,0,'
+			TIME_VARYING_F113='time_varying_f113 = .false.,'
+                        F113_DATASET_ENTRY='f113_dataset_entry = '"${Y_CA}"',1,1,0,0,0,'
+			TIME_VARYING_F22='time_varying_f22 = .false.,'
+                        F22_DATASET_ENTRY='f22_dataset_entry = '"${Y_CA}"',1,1,0,0,0,'
 		else
-		        # Copy logic from forecasting scripts -----
+			# Copy logic from forecasting scripts -----
 		        Y_CA=${NML_YEARS[i]}
 		
 		        AX=`echo "${Y_CA: -1}"`
@@ -202,10 +219,25 @@ echo "Building namelists. DATE=" `date`
 		                FILENAME=cm3_2014_o3.padded.nc
 		        else
 		                BASIC_OZONE_TYPE=time_varying
-		                OZONE_DATASET_ENTRY='!ozone_dataset_entry=2014, 1, 1, 0, 0, 0,'
+		                OZONE_DATASET_ENTRY='! ozone_dataset_entry=2014, 1, 1, 0, 0, 0,'
 		                FILENAME=CM3_CMIP6_1950-2014_O3.nc
 		        fi
 
+			TIME_VARYING_CO2='time_varying_co2 = .true.,'
+                        CO2_DATASET_ENTRY='! co2_dataset_entry = XXXX,1,1,0,0,0,'
+                        TIME_VARYING_CH4='time_varying_ch4 = .true.,'
+                        CH4_DATASET_ENTRY='! ch4_dataset_entry = XXXX,1,1,0,0,0,'
+                        TIME_VARYING_N2O='time_varying_n2o = .true.,'
+                        N2O_DATASET_ENTRY='! n2o_dataset_entry = XXXX,1,1,0,0,0,'
+                        TIME_VARYING_F11='time_varying_f11 = .true.,'
+                        F11_DATASET_ENTRY='! f11_dataset_entry = XXXX,1,1,0,0,0,'
+                        TIME_VARYING_F12='time_varying_f12 = .true.,'
+                        F12_DATASET_ENTRY='! f12_dataset_entry = XXXX,1,1,0,0,0,'
+                        TIME_VARYING_F113='time_varying_f113 = .true.,'
+                        F113_DATASET_ENTRY='! f113_dataset_entry = XXXX,1,1,0,0,0,'
+                        TIME_VARYING_F22='time_varying_f22 = .true.,'
+                        F22_DATASET_ENTRY='! f22_dataset_entry = XXXX,1,1,0,0,0,'
+		fi
 
 		ADAPT=.false.
                 JULBASE_YEAR=`echo $JULBASE | cut -b1-4`
@@ -224,7 +256,6 @@ echo "Building namelists. DATE=" `date`
 		        | sed "s/OZONE_DATASET_ENTRY/${OZONE_DATASET_ENTRY}/" \
 		        | sed "s/FILENAME/filename = "${FILENAME}"/" \
 		        > $WDIR/MOM/input.nml.${namelist_name}
-		fi
 	done
 
 #=======================================================================
