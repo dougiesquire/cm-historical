@@ -73,11 +73,13 @@ if [ ! -d "${MOMINPUT_DIR}"  ] ; then
 		ln -sf  ${REF_DIR}/MODEL/${file}_bgc ${REF_DIR}/MODEL/${file}
 	done
 
-	if [ $Y_CA -gt 2007 ]; then
-		ACO2_FILE='INPUT/co2_obs.padded.nc'
-	else
-		ACO2_FILE='INPUT/co2_obs.nc'
-	fi
+	# The switch here doesn't actually do anything since co2_obs.nc and co2_obs.padded.nc
+	# are identical prior to 2007
+	# if [ $Y_CA -gt 2007 ]; then
+	ACO2_FILE='INPUT/co2_obs.padded.nc'
+	# else
+	# 	ACO2_FILE='INPUT/co2_obs.nc'
+	# fi
 	cat ${REF_DIR}/MODEL/field_table | sed "s|ACO2_FILE|${ACO2_FILE}|" > ${REF_DIR}/MODEL/field_table.tmp
 	mv ${REF_DIR}/MODEL/field_table.tmp ${REF_DIR}/MODEL/field_table
 

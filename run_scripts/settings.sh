@@ -4,18 +4,40 @@
 DESCRIPTION='CAFE-60 historical run'
 
 ENSSIZE=1
-FORECAST_CYCLE_LEN_IN_MONTHS=960 # (8*120) to get to 2040
-PER_RUN_FORECAST_CYCLE_LEN_IN_MONTHS=120 # for when walltime limit is insufficient to run all forecast month (Gadi can run 10 years @ DT=1800 in 48 hour limit, Magnus can run 5 years @ DT=1800 in 24 hour limit)
-suffix='_historical'  # In definition of experiment name
-
-#FIRST_MEMBER=0  # also launch the forecasts using the ensemble mean as an initial condition
 FIRST_MEMBER=1
+
+CONTROL=false # Keep forcing fixed
+
+FORECAST_CYCLE_LEN_IN_MONTHS=960 # (8*120) to get to 2040 from 1960
+PER_RUN_FORECAST_CYCLE_LEN_IN_MONTHS=120 # not used if CONTROL=false, in which case cycle lengths are determined from YEARS_TO_UPDATE_NAMELIST 
+YEARS_TO_UPDATE_NAMELIST=( 1970 1980 1990 2000 2005 2010 2020 2030 ) # not used if CONTROL=true, in which case cycle lengths are determined from PER_RUN_FORECAST_CYCLE_LEN_IN_MONTHS. Update aerosol forcing every decade, switch to fixed (2014) ozone forcing in 2005.
+
+suffix='_test'  # In definition of experiment name
 
 ZARR_CONFIG_FILE=zarr_specs_CAFE-f6.json
 CHECK_CONFIG_FILE=check_specs_CAFE-f6.json
 
 this_date=" 1960  11 1"
 JULBASE="1800 1 1"
+
+#=======================================================================
+# Update PER_RUN_FORECAST_CYCLE_LEN_IN_MONTHS to be an array for each run
+if [ "$CONTROL" = true ] ; then
+	sum=0
+	t=()
+	while [ $sum -lt $FORECAST_CYCLE_LEN_IN_MONTHS ]; do 
+		t+=("${PER_RUN_FORECAST_CYCLE_LEN_IN_MONTHS}")
+		sum=$((sum + $PER_RUN_FORECAST_CYCLE_LEN_IN_MONTHS))
+	done
+	if [ $sum -ne $FORECAST_CYCLE_LEN_IN_MONTHS ]; then
+		t[-1]=$(($PER_RUN_FORECAST_CYCLE_LEN_IN_MONTHS-$sum+$FORECAST_CYCLE_LEN_IN_MONTHS))
+	fi
+	unset PER_RUN_FORECAST_CYCLE_LEN_IN_MONTHS	
+	PER_RUN_FORECAST_CYCLE_LEN_IN_MONTHS=${t[@]}
+else
+	unset PER_RUN_FORECAST_CYCLE_LEN_IN_MONTHS
+	PER_RUN_FORECAST_CYCLE_LEN_IN_MONTHS=($(./get_cycle_lengths.py ${YEARS_TO_UPDATE_NAMELIST[@]} ${this_date[@]} ${FORECAST_CYCLE_LEN_IN_MONTHS}))
+fi
 
 #=======================================================================
 # Important directories
@@ -68,8 +90,11 @@ SYSTEMNAME=CAFE
 control_name=c5
 data_assimilation_name=d60
 perturbation_name=pX
-forecast_name=f6
-contact_name="Decadal Activity 1 - Data Assimilation"
+if [ "$CONTROL" = true ] ; then
+	forecast_name=ctrl
+else
+	forecast_name=hist
+contact_name="Dougie Squire"
 # Note, need to update references with CAFE-60 paper once published.
 references="O'Kane, T.J., Sandery, P.A., Monselesan, D.P., Sakov, P., Chamberlain, M.A., Matear, R.J., Collier, M., Squire, D. and Stevens, L., 2019, 'Coupled data assimilation and ensemble initialisation with application to multi-year ENSO prediction', Journal of Climate."
 
