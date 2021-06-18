@@ -204,7 +204,7 @@ echo "Building namelists. DATE=" `date`
 		                AYEAR=2015
 		        fi
 	
-			USE_VOLCANIC_SW_FILES='using_volcanic_sw_files = .true.,'	
+			USE_VOLCANIC_SW_FILES='using_volcanic_sw_files = .true.,' # DTS: had to add this so that can turn off in control run -----
 		        if [ $Y_CA -gt 2000 ]; then
 		                REPEAT_VOLCANO_YEAR='repeat_volcano_year=.true.'
 		                VOLCANO_YEAR_USED='volcano_year_used = 2008,'
@@ -223,6 +223,7 @@ echo "Building namelists. DATE=" `date`
 		                FILENAME=CM3_CMIP6_1950-2014_O3.nc
 		        fi
 
+			 # DTS: had to add this so that can turn off in control run -----
 			TIME_VARYING_CO2='time_varying_co2 = .true.,'
                         CO2_DATASET_ENTRY='! co2_dataset_entry = XXXX,1,1,0,0,0,'
                         TIME_VARYING_CH4='time_varying_ch4 = .true.,'
@@ -254,6 +255,20 @@ echo "Building namelists. DATE=" `date`
 			| sed "s/USE_VOLCANIC_SW_FILES/${USE_VOLCANIC_SW_FILES}/" \
 		        | sed "s/BASIC_OZONE_TYPE/basic_ozone_type = '${BASIC_OZONE_TYPE}'/" \
 		        | sed "s/OZONE_DATASET_ENTRY/${OZONE_DATASET_ENTRY}/" \
+			| sed "s/TIME_VARYING_CO2/${TIME_VARYING_CO2}/" \
+			| sed "s/CO2_DATASET_ENTRY/${CO2_DATASET_ENTRY}/" \
+			| sed "s/TIME_VARYING_CH4/${TIME_VARYING_CH4}/" \
+			| sed "s/CH4_DATASET_ENTRY/${CH4_DATASET_ENTRY}/" \
+			| sed "s/TIME_VARYING_N2O/${TIME_VARYING_N2O}/" \
+			| sed "s/N2O_DATASET_ENTRY/${N2O_DATASET_ENTRY}/" \
+			| sed "s/TIME_VARYING_F11/${TIME_VARYING_F11}/" \
+			| sed "s/F11_DATASET_ENTRY/${F11_DATASET_ENTRY}/" \
+			| sed "s/TIME_VARYING_F12/${TIME_VARYING_F12}/" \
+			| sed "s/F12_DATASET_ENTRY/${F12_DATASET_ENTRY}/" \
+			| sed "s/TIME_VARYING_F113/${TIME_VARYING_F113}/" \
+			| sed "s/F113_DATASET_ENTRY/${F113_DATASET_ENTRY}/" \
+			| sed "s/TIME_VARYING_F22/${TIME_VARYING_F22}/" \
+			| sed "s/F22_DATASET_ENTRY/${F22_DATASET_ENTRY}/" \
 		        | sed "s/FILENAME/filename = "${FILENAME}"/" \
 		        > $WDIR/MOM/input.nml.${namelist_name}
 	done
