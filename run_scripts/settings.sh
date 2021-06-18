@@ -34,7 +34,8 @@ if [ "$CONTROL" = true ] ; then
 	PER_RUN_FORECAST_CYCLE_LEN_IN_MONTHS=${t[@]}
 else
 	unset PER_RUN_FORECAST_CYCLE_LEN_IN_MONTHS
-	PER_RUN_FORECAST_CYCLE_LEN_IN_MONTHS=($(./get_cycle_lengths.py ${YEARS_TO_UPDATE_NAMELIST[@]} ${this_date[@]} ${FORECAST_CYCLE_LEN_IN_MONTHS}))
+	SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )" # hack to get src direction
+	PER_RUN_FORECAST_CYCLE_LEN_IN_MONTHS=($(${SCRIPT_DIR}/src/get_cycle_lengths.py ${YEARS_TO_UPDATE_NAMELIST[@]} ${this_date[@]} ${FORECAST_CYCLE_LEN_IN_MONTHS}))
 fi
 
 #=======================================================================

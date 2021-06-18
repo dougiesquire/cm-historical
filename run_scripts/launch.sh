@@ -43,7 +43,7 @@ cat src/${RUNSCRIPTNAME}.in | sed "s|INPUT_NPMASTER|${NP_MASTER}|" >> ${WDIR}/${
 cd $WDIR
 
 if [ "${queue}" = "pbs" ] ; then
-	qsub -N ${this_date_print} ./${RUNSCRIPTNAME}
+	qsub -N ${this_date_print} -q express ./${RUNSCRIPTNAME}
 elif [ "${queue}" = "slurm" ] ; then
 	sbatch -J ${this_date_print} -o ${this_date_print}.out ./${RUNSCRIPTNAME}
 else
