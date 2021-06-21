@@ -70,12 +70,12 @@
     lw_ssa_filename = "             "
     lw_ssa_root = "     "
     USE_VOLCANIC_SW_FILES    
-    SW_EXT_FILENAME
-    SW_EXT_ROOT
-    SW_SSA_FILENAME
-    SW_SSA_ROOT
-    SW_ASY_FILENAME
-    SW_ASY_ROOT
+    sw_ext_filename = "extsw_data.nc"
+    sw_ext_root = "extsw"
+    sw_ssa_filename = "omgsw_data.nc"
+    sw_ssa_root = "omgsw"
+    sw_asy_filename = "asmsw_data.nc"
+    sw_asy_root = "asmsw"
     do_lwaerosol = .true.,
     do_swaerosol = .true.,
     aerosol_data_set = 'shettle_fenn',
