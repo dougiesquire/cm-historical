@@ -175,7 +175,13 @@ echo "Building namelists. DATE=" `date`
 			REPEAT_VOLCANO_YEAR='! repeat_volcano_year=.true.'
 			VOLCANO_YEAR_USED='! volcano_year_used = XXXX,'
 			USE_VOLCANIC_SW_FILES='using_volcanic_sw_files = .false.,'
-
+			SW_EXT_FILENAME='sw_ext_filename = "             "'
+			SW_EXT_ROOT='sw_ext_root = "     "'
+			SW_SSA_FILENAME='sw_ssa_filename = "             "'
+			SW_SSA_ROOT='sw_ssa_root = "     "'
+			SW_ASY_FILENAME='sw_asy_filename = "             "'
+			SW_ASY_ROOT='sw_asy_root = "     "'
+			
 			BASIC_OZONE_TYPE=fixed_year
                         OZONE_DATASET_ENTRY='ozone_dataset_entry='"${Y_CA}"', 1, 1, 0, 0, 0,'
 			FILENAME=CM3_CMIP6_1950-2014_O3.nc
@@ -212,6 +218,13 @@ echo "Building namelists. DATE=" `date`
 		                REPEAT_VOLCANO_YEAR='! repeat_volcano_year=.true.'
 		                VOLCANO_YEAR_USED='! volcano_year_used = 2008,'
 		        fi
+			# DTS: had to add this so that can turn off in control run -----
+			SW_EXT_FILENAME='sw_ext_filename = "extsw_data.nc"'
+                        SW_EXT_ROOT='sw_ext_root = "extsw"'
+                        SW_SSA_FILENAME='sw_ssa_filename = "omgsw_data.nc"'
+                        SW_SSA_ROOT='sw_ssa_root = "omgsw"'
+                        SW_ASY_FILENAME='sw_asy_filename = "asmsw_data.nc"'
+                        SW_ASY_ROOT='sw_asy_root = "asmsw"'
 		
 		        if [ $Y_CA -gt 2004 ]; then
 		                BASIC_OZONE_TYPE=fixed_year
@@ -253,6 +266,12 @@ echo "Building namelists. DATE=" `date`
 		        | sed "s/REPEAT_VOLCANO_YEAR/${REPEAT_VOLCANO_YEAR}/" \
 		        | sed "s/VOLCANO_YEAR_USED/${VOLCANO_YEAR_USED}/" \
 			| sed "s/USE_VOLCANIC_SW_FILES/${USE_VOLCANIC_SW_FILES}/" \
+			| sed "s/SW_EXT_FILENAME/${SW_EXT_FILENAME}/" \
+			| sed "s/SW_EXT_ROOT/${SW_EXT_ROOT}/" \
+			| sed "s/SW_SSA_FILENAME/${SW_SSA_FILENAME}/" \
+			| sed "s/SW_SSA_ROOT/${SW_SSA_ROOT}/" \
+			| sed "s/SW_ASY_FILENAME/${SW_ASY_FILENAME}/" \
+			| sed "s/SW_ASY_ROOT/${SW_ASY_ROOT}/" \
 		        | sed "s/BASIC_OZONE_TYPE/basic_ozone_type = '${BASIC_OZONE_TYPE}'/" \
 		        | sed "s/OZONE_DATASET_ENTRY/${OZONE_DATASET_ENTRY}/" \
 			| sed "s/TIME_VARYING_CO2/${TIME_VARYING_CO2}/" \
