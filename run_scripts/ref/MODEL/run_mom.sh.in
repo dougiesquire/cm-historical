@@ -12,9 +12,9 @@ module list
 #-------------------------------------------
 # Change the <DT> variable if need to reduce timestep due to numerical instability.
 DT=DT_INPUT  
-# Shorten the <months> variable if <DT> wass made smaller due to numerical instability 
-# and run time for full forecast too long to fit into maximim walltime.
-months=MONTHS_PER_RUN_INPUT
+# Shorten the <segments> variable if <DT> wass made smaller due to numerical instability 
+# and run time for forecast cycle too long to fit into maximim walltime.
+segments=1 # Doesn't do anything yet. Implement if/when needed
 #-------------------------------------------
 
 machine=MACHINE_INPUT
@@ -87,15 +87,16 @@ if [ ! -f "${POSTPROCESSING_LOGDIR}/MOM_${memstr}.done" ]; then
 	       	THUMP=.false.
         fi
 
-        if (( MONTHS_DONE + months > months_orig )) ; then
-		months=$((months_orig-MONTHS_DONE))
-	fi
-
 	# Use namelist for correct range of lead times
-	NAMELIST=$(find ${WDIR}/MOM -type f -iname "input.nml.$MONTHS_DONE-*")
+        NAMELIST=$(find ${WDIR}/MOM -type f -iname "input.nml.$MONTHS_DONE-*")
 	
-	# Update the namelist
 	if [ -f "${NAMELIST}" ]; then
+		run_end_lead_time=$(cut -d "-" -f2- <<< `basename $NAMELIST`)
+		months=$((run_end_lead_time-MONTHS_DONE))
+
+		if (( MONTHS_DONE + months > months_orig )) ; then
+          	      months=$((months_orig-MONTHS_DONE))
+       		fi
 		cat ${NAMELIST} \
 			| sed "s/.*dt_ocean.*/dt_ocean = ${DT}/"\
 		       	| sed "s/.*dt_cpld.*/dt_cpld = ${DT}/"\
@@ -103,8 +104,15 @@ if [ ! -f "${POSTPROCESSING_LOGDIR}/MOM_${memstr}.done" ]; then
 			| sed "s/INPUT_MONTHS/months = ${months}/"\
 			| sed "s/USE_HARD_THUMP/use_hard_thump=${THUMP}/"\
 		       	> input.nml
+	else
+		echo "Could not find required input.nml for ${MONTHS_DONE} months done."
+                touch ${POSTPROCESSING_LOGDIR}/MOM_${memstr}.failed
+                ./github_message.sh ${memstr}_forecast fail
+                exit
+	fi
 
 	# Launch MOM job
+	echo "Running ${months} month forecast using `basename $NAMELIST`..."
 	./github_message.sh ${memstr}_forecast start
 	MOM_COMMAND_INPUT ./EXEC  2>&1 | tee mom-${DT}.out
 
