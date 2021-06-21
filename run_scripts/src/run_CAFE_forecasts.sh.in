@@ -306,7 +306,6 @@ echo "Starting model propagation. DATE=" `date`
 			cat ${WDIR}/run_mom.sh \
 				| sed "s|MEM1_INPUT|\"${mem}\"|"\
 				| sed "s|MONTHS_INPUT|${FORECAST_CYCLE_LEN_IN_MONTHS}|"\
-				# | sed "s|MONTHS_PER_RUN_INPUT|${PER_RUN_FORECAST_CYCLE_LEN_IN_MONTHS}|"\
 			       	| sed "s|JOBNAME_INPUT|${JOBNAME}|"\
 			       	> ${WDIR}/${job_script_name}
 			if [ "${queue}" = "pbs" ] ; then

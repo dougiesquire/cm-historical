@@ -8,16 +8,16 @@ FIRST_MEMBER=1
 
 CONTROL=false # Keep forcing fixed
 
-FORECAST_CYCLE_LEN_IN_MONTHS=960 # (8*120) to get to 2040 from 1960
+FORECAST_CYCLE_LEN_IN_MONTHS=24 #960 # (8*120) to get to 2040 from 1960
 PER_RUN_FORECAST_CYCLE_LEN_IN_MONTHS=120 # not used if CONTROL=false, in which case cycle lengths are determined from YEARS_TO_UPDATE_NAMELIST 
-YEARS_TO_UPDATE_NAMELIST=( 1970 1980 1990 2000 2005 2010 2020 2030 ) # not used if CONTROL=true, in which case cycle lengths are determined from PER_RUN_FORECAST_CYCLE_LEN_IN_MONTHS. Update aerosol forcing every decade, switch to fixed (2014) ozone forcing in 2005.
+YEARS_TO_UPDATE_NAMELIST=( 1970 ) #( 1970 1980 1990 2000 2005 2010 2020 2030 ) # not used if CONTROL=true, in which case cycle lengths are determined from PER_RUN_FORECAST_CYCLE_LEN_IN_MONTHS. Update aerosol forcing every decade, switch to fixed (2014) ozone forcing in 2005.
 
 suffix='_test'  # In definition of experiment name
 
 ZARR_CONFIG_FILE=zarr_specs_CAFE-f6.json
 CHECK_CONFIG_FILE=check_specs_CAFE-f6.json
 
-this_date=" 1960  11 1"
+this_date=" 1969 11 1" #" 1960  11 1"
 JULBASE="1800 1 1"
 
 #=======================================================================
