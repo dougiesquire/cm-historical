@@ -1097,7 +1097,7 @@
 
  &shortwave_driver_nml
        do_cmip_diagnostics = .true.,
-       calculate_volcanic_sw_heating = .true.,
+       CALCULATE_VOLCANIC_SW_HEATING
        swform = 'esfsw99'
 /
 
