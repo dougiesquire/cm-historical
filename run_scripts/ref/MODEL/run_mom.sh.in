@@ -70,12 +70,13 @@ fi
 if [ ! -f "${POSTPROCESSING_LOGDIR}/MOM_${memstr}.done" ]; then
 	# Build namelist
 	set +e
-	rm -f input.nml
+	# rm -f input.nml
 
 	if [ -f ${POSTPROCESSING_LOGDIR}/MOM_${memstr}.progress ] ; then
 		MONTHS_DONE=`cat ${POSTPROCESSING_LOGDIR}/MOM_${memstr}.progress | head -1`
 	else
 		MONTHS_DONE=0
+		rm -f input.nml
 	fi
 
         if (( MONTHS_DONE == 0 )) ; then
@@ -90,13 +91,18 @@ if [ ! -f "${POSTPROCESSING_LOGDIR}/MOM_${memstr}.done" ]; then
 		months=$((months_orig-MONTHS_DONE))
 	fi
 
-	cat ${WDIR}/MOM/input.nml \
-		| sed "s/.*dt_ocean.*/dt_ocean = ${DT}/"\
-	       	| sed "s/.*dt_cpld.*/dt_cpld = ${DT}/"\
-	       	| sed "s/.*dt_atmos.*/dt_atmos = ${DT}/"\
-		| sed "s/INPUT_MONTHS/months = ${months}/"\
-		| sed "s/USE_HARD_THUMP/use_hard_thump=${THUMP}/"\
-	       	> input.nml
+	# Use namelist for correct range of lead times
+	NAMELIST=$(find ${WDIR}/MOM -type f -iname "input.nml.$MONTHS_DONE-*")
+	
+	# Update the namelist
+	if [ -f "${NAMELIST}" ]; then
+		cat ${NAMELIST} \
+			| sed "s/.*dt_ocean.*/dt_ocean = ${DT}/"\
+		       	| sed "s/.*dt_cpld.*/dt_cpld = ${DT}/"\
+		       	| sed "s/.*dt_atmos.*/dt_atmos = ${DT}/"\
+			| sed "s/INPUT_MONTHS/months = ${months}/"\
+			| sed "s/USE_HARD_THUMP/use_hard_thump=${THUMP}/"\
+		       	> input.nml
 
 	# Launch MOM job
 	./github_message.sh ${memstr}_forecast start
