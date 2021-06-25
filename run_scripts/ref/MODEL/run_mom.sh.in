@@ -148,6 +148,7 @@ if [ ! -f "${POSTPROCESSING_LOGDIR}/MOM_${memstr}.done" ]; then
 				echo "mom member $mem in progress and requires user verification and then relaunch, bailing out."
 				./github_message.sh ${memstr}_forecast progress
 				mv mom-${DT}.out mom-${DT}.out.${MONTHS_DONE}_months_done
+				mv input.nml input.nml.${MONTHS_DONE}_months_done
 				cd ${WDIR}
 				if [ "${machine}" = "gadi.nci.org.au" ] ; then
 					qsub $0

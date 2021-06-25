@@ -172,11 +172,18 @@ echo "Building namelists. DATE=" `date`
 			AX=`echo "${Y_CA: -1}"`
                         (( AYEAR = Y_CA - AX + 5 ))
 			
-			REPEAT_VOLCANO_YEAR='! repeat_volcano_year=.true.'
-			VOLCANO_YEAR_USED='! volcano_year_used = XXXX,'
-			USE_VOLCANIC_SW_FILES='using_volcanic_sw_files = .false.,'
-			CALCULATE_VOLCANIC_SW_HEATING='calculate_volcanic_sw_heating = .false.,'
-			
+			if [ "$CONTROL_VOLCANOS" = true ] ; then
+				REPEAT_VOLCANO_YEAR='repeat_volcano_year=.true.'
+				VOLCANO_YEAR_USED='volcano_year_used = '"${Y_CA}"','
+				USE_VOLCANIC_SW_FILES='using_volcanic_sw_files = .true.,'
+				CALCULATE_VOLCANIC_SW_HEATING='calculate_volcanic_sw_heating = .true.,'
+			else
+				REPEAT_VOLCANO_YEAR='! repeat_volcano_year=.true.'
+				VOLCANO_YEAR_USED='! volcano_year_used = XXXX,'
+				USE_VOLCANIC_SW_FILES='using_volcanic_sw_files = .false.,'
+				CALCULATE_VOLCANIC_SW_HEATING='calculate_volcanic_sw_heating = .false.,'
+			fi
+
 			BASIC_OZONE_TYPE=fixed_year
                         OZONE_DATASET_ENTRY='ozone_dataset_entry='"${Y_CA}"', 1, 1, 0, 0, 0,'
 			FILENAME=CM3_CMIP6_1950-2014_O3.nc

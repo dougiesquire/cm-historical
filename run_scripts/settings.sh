@@ -7,12 +7,13 @@ ENSSIZE=1
 FIRST_MEMBER=1
 
 CONTROL=true # Keep forcing fixed
+CONTROL_VOLCANOS=true # not used if CONTROL=false. Whether to use fixed volcanic forcing corresponding to the start year of the control run (CONTROL_VOLCANOS=true) or to turn volcanic forcing off entirely (CONTROL_VOLCANOS=false)
 
 FORECAST_CYCLE_LEN_IN_MONTHS=960 # (8*120) to get to 2040 from 1960
 PER_RUN_FORECAST_CYCLE_LEN_IN_MONTHS=120 # not used if CONTROL=false, in which case cycle lengths are determined from YEARS_TO_UPDATE_NAMELIST 
 YEARS_TO_UPDATE_NAMELIST=( 1970 1980 1990 2000 2005 2010 2020 2030 ) # not used if CONTROL=true, in which case cycle lengths are determined from PER_RUN_FORECAST_CYCLE_LEN_IN_MONTHS. Update aerosol forcing every decade, switch to fixed (2014) ozone forcing in 2005.
 
-suffix=''  # In definition of experiment name
+suffix='_fixedvolcanos'  # In definition of experiment name
 
 ZARR_CONFIG_FILE=zarr_specs_CAFE-f6.json
 CHECK_CONFIG_FILE=check_specs_CAFE-f6.json
