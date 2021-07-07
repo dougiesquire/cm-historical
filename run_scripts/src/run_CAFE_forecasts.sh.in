@@ -172,18 +172,12 @@ echo "Building namelists. DATE=" `date`
 			AX=`echo "${Y_CA: -1}"`
                         (( AYEAR = Y_CA - AX + 5 ))
 			
-			if [ "$CONTROL_VOLCANOS" = true ] ; then
-				REPEAT_VOLCANO_YEAR='repeat_volcano_year=.true.'
-				VOLCANO_YEAR_USED='volcano_year_used = '"${Y_CA}"','
-				USE_VOLCANIC_SW_FILES='using_volcanic_sw_files = .true.,'
-				CALCULATE_VOLCANIC_SW_HEATING='calculate_volcanic_sw_heating = .true.,'
-			else
-				REPEAT_VOLCANO_YEAR='! repeat_volcano_year=.true.'
-				VOLCANO_YEAR_USED='! volcano_year_used = XXXX,'
-				USE_VOLCANIC_SW_FILES='using_volcanic_sw_files = .false.,'
-				CALCULATE_VOLCANIC_SW_HEATING='calculate_volcanic_sw_heating = .false.,'
-			fi
-
+			# May be overwritten by NO_VOLCANOS, see line 248 -----
+			REPEAT_VOLCANO_YEAR='repeat_volcano_year=.true.'
+			VOLCANO_YEAR_USED='volcano_year_used = '"${Y_CA}"','
+			USE_VOLCANIC_SW_FILES='using_volcanic_sw_files = .true.,'
+			CALCULATE_VOLCANIC_SW_HEATING='calculate_volcanic_sw_heating = .true.,'
+			
 			BASIC_OZONE_TYPE=fixed_year
                         OZONE_DATASET_ENTRY='ozone_dataset_entry='"${Y_CA}"', 1, 1, 0, 0, 0,'
 			FILENAME=CM3_CMIP6_1950-2014_O3.nc
@@ -211,7 +205,8 @@ echo "Building namelists. DATE=" `date`
 		        if [ $AYEAR -gt 2015 ]; then
 		                AYEAR=2015
 		        fi
-	
+			
+			# May be overwritten by NO_VOLCANOS, see line 248 -----
 			USE_VOLCANIC_SW_FILES='using_volcanic_sw_files = .true.,' # DTS: had to add this so that can turn off in control run -----
 		        if [ $Y_CA -gt 2000 ]; then
 		                REPEAT_VOLCANO_YEAR='repeat_volcano_year=.true.'
@@ -249,6 +244,13 @@ echo "Building namelists. DATE=" `date`
                         TIME_VARYING_F22='time_varying_f22 = .true.,'
                         F22_DATASET_ENTRY='! f22_dataset_entry = XXXX,1,1,0,0,0,'
 		fi
+
+		if [ "$NO_VOLCANOS" = true ] ; then
+			REPEAT_VOLCANO_YEAR='! repeat_volcano_year=.true.'
+			VOLCANO_YEAR_USED='! volcano_year_used = XXXX,'
+			USE_VOLCANIC_SW_FILES='using_volcanic_sw_files = .false.,'
+			CALCULATE_VOLCANIC_SW_HEATING='calculate_volcanic_sw_heating = .false.,'
+                fi
 
 		ADAPT=.false.
                 JULBASE_YEAR=`echo $JULBASE | cut -b1-4`
