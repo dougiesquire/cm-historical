@@ -83,7 +83,7 @@ if [ ! -f "${POSTPROCESSING_LOGDIR}/MOM_${memstr}.done" ]; then
 		# first MOM cycle
 	       	THUMP=.true.
         else
-		# restart from previous MOM cycle if needed to split into two jobs
+		# restart from previous MOM cycle
 	       	THUMP=.false.
         fi
 

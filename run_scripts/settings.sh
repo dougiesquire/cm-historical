@@ -9,6 +9,7 @@ FIRST_MEMBER=1
 CONTROL=false # Keep forcing fixed at start year of control run
 NO_VOLCANOS=true # Whether to turn volcanic forcing off entirely
 
+# Try to run in blocks of 10 years or less on Gadi and 4 years or less on Magnus. Runs of these lengths will be able to complete with a reduced timestep (DT=1200) within the walltime limits on each system if the model becomes unstable.
 FORECAST_CYCLE_LEN_IN_MONTHS=960 # (8*120) to get to 2040 from 1960
 PER_RUN_FORECAST_CYCLE_LEN_IN_MONTHS=60 # not used if CONTROL=false, in which case cycle lengths are determined from YEARS_TO_UPDATE_NAMELIST 
 YEARS_TO_UPDATE_NAMELIST=( 1970 1980 1990 2000 2005 2010 2020 2030 ) # not used if CONTROL=true, in which case cycle lengths are determined from PER_RUN_FORECAST_CYCLE_LEN_IN_MONTHS. Update aerosol forcing every decade, switch to fixed (2014) ozone forcing in 2005.
