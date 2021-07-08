@@ -14,7 +14,8 @@ module list
 DT=DT_INPUT  
 # Shorten the <segments> variable if <DT> wass made smaller due to numerical instability 
 # and run time for forecast cycle too long to fit into maximim walltime.
-segments=1 # Doesn't do anything yet. Implement if/when needed
+# If you change this, change it back to the original DT immediately after resubmitting the job 
+# otherwise all subsequent blocks in the histogrical run will be run with the reduced DT
 #-------------------------------------------
 
 machine=MACHINE_INPUT
