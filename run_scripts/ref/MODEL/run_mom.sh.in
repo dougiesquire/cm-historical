@@ -294,7 +294,8 @@ if [ -f "${POSTPROCESSING_LOGDIR}/REGRID_${memstr}.done" ]; then
 		cp ${POSTPROCESSING_SRCDIR}/2_zarrify/convert_forecast_to_zarr.py .
 		if [ "${machine}" = "gadi.nci.org.au" ] ; then
 			cp ${POSTPROCESSING_SRCDIR}/2_zarrify/ZARRIFY_Gadi.sh ./ZARRIFY.sh
-			jobfs_path=${PBS_JOBFS}/ZARR
+			# jobfs_path=${PBS_JOBFS}/ZARR
+			jobfs_path="" # Set to "" to write directly to ZARR_MEM_PATH
 			PYTHON_PATH=$PYTHON ZARRTOOLS_PATH=$ZARR_PATH ./ZARRIFY.sh \
                                 $WDIR $ZARR_MEM_PATH "all" $mem $ZARR_CONFIG_FILE $jobfs_path \
                                 > ${POSTPROCESSING_LOGDIR}/ZARR_${memstr}.progress 2>&1
