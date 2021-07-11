@@ -35,7 +35,8 @@ TAPE_DIR=TAPE_DIR_INPUT
 ZARR_OUTPUT_PATH=${SAVE_EXP_DIR}/ZARR
 CHECK_CONFIG_FILE=CHECK_CONFIG_FILE_INPUT
 
-memstr=`printf "mem%03d" $mem`
+mem0=`printf "%03d" $mem`
+memstr="mem${mem0}"
 
 cd ${WDIR}/$memstr
 cp ${WDIR}/github_message.sh .
@@ -150,9 +151,9 @@ if [ ! -f "${POSTPROCESSING_LOGDIR}/MOM_${memstr}.done" ]; then
 				mv input.nml input.nml.${MONTHS_DONE}_months_done
 				cd ${WDIR}
 				if [ "${machine}" = "gadi.nci.org.au" ] ; then
-					qsub $0
+					qsub run_mom.${mem0}.sh
 				elif [ "${machine}" = "magnus.pawsey.org.au" ] ; then
-					sbatch $0
+					sbatch run_mom.${mem0}.sh
 				fi
 				exit
 			fi
