@@ -14,7 +14,7 @@ FORECAST_CYCLE_LEN_IN_MONTHS=960 # (8*120) to get to 2040 from 1960
 PER_RUN_FORECAST_CYCLE_LEN_IN_MONTHS=60 # not used if CONTROL=false, in which case cycle lengths are determined from YEARS_TO_UPDATE_NAMELIST 
 YEARS_TO_UPDATE_NAMELIST=( 1970 1980 1990 2000 2005 2010 2020 2030 ) # not used if CONTROL=true, in which case cycle lengths are determined from PER_RUN_FORECAST_CYCLE_LEN_IN_MONTHS. Update aerosol forcing every decade, switch to fixed (2014) ozone forcing in 2005.
 
-suffix='-no_volcanos-dt1200'  # In definition of experiment name
+suffix='-no_volcanos-dt900'  # In definition of experiment name
 
 ZARR_CONFIG_FILE=zarr_specs_CAFE-f6.json
 CHECK_CONFIG_FILE=check_specs_CAFE-f6.json
@@ -141,7 +141,7 @@ TAPE_DIR=${forecast_name}/${EXPNAME}
 REF_DIR=${WDIR}"/ref"
 HEADER_MASTER=${REF_DIR}"/header_master."${machine}
 HEADER_MOM=${REF_DIR}"/header_mom."${machine}
-DT="1200"
+DT="900"
 
 #=======================================================================
 # EOF
