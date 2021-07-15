@@ -3,18 +3,18 @@
 #=======================================================================
 DESCRIPTION='CAFE-60 historical run'
 
-ENSSIZE=1
+ENSSIZE=96
 FIRST_MEMBER=1
 
 CONTROL=false # Keep forcing fixed at start year of control run
-NO_VOLCANOS=true # Whether to turn volcanic forcing off entirely
+NO_VOLCANOS=false # Whether to turn volcanic forcing off entirely
 
 # Try to run in blocks of 10 years or less on Gadi and 4 years or less on Magnus. Runs of these lengths will be able to complete with a reduced timestep (DT=1200) within the walltime limits on each system if the model becomes unstable.
 FORECAST_CYCLE_LEN_IN_MONTHS=960 # (8*120) to get to 2040 from 1960
 PER_RUN_FORECAST_CYCLE_LEN_IN_MONTHS=60 # not used if CONTROL=false, in which case cycle lengths are determined from YEARS_TO_UPDATE_NAMELIST 
-YEARS_TO_UPDATE_NAMELIST=( 1970 1980 1990 2000 2005 2010 2020 2030 ) # not used if CONTROL=true, in which case cycle lengths are determined from PER_RUN_FORECAST_CYCLE_LEN_IN_MONTHS. Update aerosol forcing every decade, switch to fixed (2014) ozone forcing in 2005.
+YEARS_TO_UPDATE_NAMELIST=( 1965 1970 1975 1980 1985 1990 1995 2000 2005 2010 2015 2020 2025 2030 2035 ) # not used if CONTROL=true, in which case cycle lengths are determined from PER_RUN_FORECAST_CYCLE_LEN_IN_MONTHS. Update aerosol forcing every decade, switch to fixed (2014) ozone forcing in 2005.
 
-suffix='-no_volcanos-dt900'  # In definition of experiment name
+suffix='-96mem'  # In definition of experiment name
 
 ZARR_CONFIG_FILE=zarr_specs_CAFE-f6.json
 CHECK_CONFIG_FILE=check_specs_CAFE-f6.json
@@ -142,7 +142,7 @@ REF_DIR=${WDIR}"/ref"
 HEADER_MASTER=${REF_DIR}"/header_master."${machine}
 HEADER_MOM=${REF_DIR}"/header_mom."${machine}
 DT_ATMOS="1800"
-DT_OCEAN="900"
+DT_OCEAN="1800"
 DT_CPLD="1800"
 
 #=======================================================================

@@ -3,7 +3,7 @@
 DIR=$1
 START_DATE=$2
 
-inputs=( `ls ${DIR}/MOM/input.nml.*-*` )
+inputs=( `ls ${DIR}/MOM/input.nml.*-* | sort --version-sort` )
 n_inputs=${#inputs[@]}
 for i in $(seq 0 $(( $n_inputs - 2 ))); do
 	 DIFF=$(diff ${inputs[i]} ${inputs[i+1]})
