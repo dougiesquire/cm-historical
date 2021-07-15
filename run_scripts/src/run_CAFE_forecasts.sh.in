@@ -301,8 +301,10 @@ echo "Starting model propagation. DATE=" `date`
                 | sed "s|EXEC|${EXECNAME}|"\
                 | sed "s|ENSSIZE|${ENSSIZE}|"\
                 | sed "s|FIRST_MEMBER|${FIRST_MEMBER}|"\
-                | sed "s|DT_INPUT|\"${DT}\"|"\
-                | sed "s|WDIR_INPUT|\"${WDIR}\"|"\
+                | sed "s|DT_ATMOS_INPUT|\"${DT_ATMOS}\"|"\
+                | sed "s|DT_OCEAN_INPUT|\"${DT_OCEAN}\"|"\
+		| sed "s|DT_CPLD_INPUT|\"${DT_CPLD}\"|"\
+		| sed "s|WDIR_INPUT|\"${WDIR}\"|"\
                 | sed "s|SAVE_DIR_INPUT|\"${SAVE_DIR}\"|"\
                 | sed "s|MOM_COMMAND_INPUT|${MOM_COMMAND}|"\
                 | sed "s|TAPE_DIR_INPUT|${TAPE_DIR}|"\

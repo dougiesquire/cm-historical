@@ -10,10 +10,15 @@ export F_UFMTENDIAN=big
 module list
 
 #-------------------------------------------
-# Change the <DT> variable if need to reduce timestep due to numerical instability.
-DT=DT_INPUT  
-# If you change this, change it back to the original DT immediately after resubmitting the job 
-# otherwise all subsequent blocks in the histogrical run will be run with the reduced DT
+# Change the <DT> variables if need to reduce timestep due to numerical instability.
+DT_ATMOS=DT_ATMOS_INPUT
+DT_OCEAN=DT_OCEAN_INPUT
+DT_CPLD=DT_CPLD_INPUT
+# If you change these, change it back to the original DT immediately after resubmitting the job 
+# otherwise all subsequent blocks in the historical run will be run with the reduced DT
+#
+# NOTE: the equilibrium state of the model is very sensitive to the atmospheric timestep.
+# We are still investigating the cause of this, but be very careful changing these numbers!
 #-------------------------------------------
 
 machine=MACHINE_INPUT
@@ -21,7 +26,9 @@ WDIR=WDIR_INPUT
 SAVE_DIR=SAVE_DIR_INPUT
 mem=MEM1_INPUT
 months_orig=MONTHS_INPUT
-DT_orig=DT_INPUT
+DT_ATMOS_orig=DT_ATMOS_INPUT
+DT_OCEAN_orig=DT_OCEAN_INPUT
+DT_CPLD_orig=DT_CPLD_INPUT
 
 PYTHON=PYTHON_INPUT
 POSTPROCESSING_SRCDIR=POSTPROCESSING_SRCDIR_INPUT
@@ -98,9 +105,9 @@ if [ ! -f "${POSTPROCESSING_LOGDIR}/MOM_${memstr}.done" ]; then
           	      months=$((months_orig-MONTHS_DONE))
        		fi
 		cat ${NAMELIST} \
-			| sed "s/.*dt_ocean.*/dt_ocean = ${DT}/"\
-		       	| sed "s/.*dt_cpld.*/dt_cpld = ${DT}/"\
-		       	| sed "s/.*dt_atmos.*/dt_atmos = ${DT}/"\
+			| sed "s/.*dt_ocean.*/dt_ocean = ${DT_OCEAN}/"\
+		       	| sed "s/.*dt_cpld.*/dt_cpld = ${DT_CPLD}/"\
+		       	| sed "s/.*dt_atmos.*/dt_atmos = ${DT_ATMOS}/"\
 			| sed "s/INPUT_MONTHS/months = ${months}/"\
 			| sed "s/USE_HARD_THUMP/use_hard_thump=${THUMP}/"\
 		       	> input.nml
@@ -114,11 +121,11 @@ if [ ! -f "${POSTPROCESSING_LOGDIR}/MOM_${memstr}.done" ]; then
 	# Launch MOM job
 	echo "Running ${months} month forecast using `basename $NAMELIST`..."
 	./github_message.sh ${memstr}_forecast start
-	MOM_COMMAND_INPUT ./EXEC  2>&1 | tee mom-${DT}.out
+	MOM_COMMAND_INPUT ./EXEC  2>&1 | tee mom-o${DT_OCEAN}-a${DT_ATMOS}-c${DT_CPLD}.out
 
 	# Checck for successful completion
 	set -e
-        mom_complete_flag=`tail -n1 mom-${DT}.out | grep 'MPP_STACK high water mark=' | grep '0' | wc -l`
+        mom_complete_flag=`tail -n1 mom-o${DT_OCEAN}-a${DT_ATMOS}-c${DT_CPLD}.out | grep 'MPP_STACK high water mark=' | grep '0' | wc -l`
         if (( mom_complete_flag == 1 )) ; then
                 echo "mom job complete"
 
@@ -147,7 +154,7 @@ if [ ! -f "${POSTPROCESSING_LOGDIR}/MOM_${memstr}.done" ]; then
 				echo ${MONTHS_DONE} > ${POSTPROCESSING_LOGDIR}/MOM_${memstr}.progress
 				echo "mom member $mem in progress and requires user verification and then relaunch, bailing out."
 				./github_message.sh ${memstr}_forecast progress
-				mv mom-${DT}.out mom-${DT}.out.${MONTHS_DONE}_months_done
+				mv mom-o${DT_OCEAN}-a${DT_ATMOS}-c${DT_CPLD}.out mom-o${DT_OCEAN}-a${DT_ATMOS}-c${DT_CPLD}.out.${MONTHS_DONE}_months_done
 				mv input.nml input.nml.${MONTHS_DONE}_months_done
 				cd ${WDIR}
 				if [ "${machine}" = "gadi.nci.org.au" ] ; then

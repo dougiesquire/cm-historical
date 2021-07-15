@@ -141,7 +141,9 @@ TAPE_DIR=${forecast_name}/${EXPNAME}
 REF_DIR=${WDIR}"/ref"
 HEADER_MASTER=${REF_DIR}"/header_master."${machine}
 HEADER_MOM=${REF_DIR}"/header_mom."${machine}
-DT="900"
+DT_ATMOS="1800"
+DT_OCEAN="900"
+DT_CPLD="1800"
 
 #=======================================================================
 # EOF
