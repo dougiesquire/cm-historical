@@ -1,6 +1,6 @@
 # File: run_mom.sh.in
 # Purpose: input for BASH script for running MOM5 models
-# Author: Vassili Kitsios, modified from previous script of Pavel Sakov
+# Author: Dougie Squire and Vassili Kitsios, modified from previous script of Pavel Sakov
 # Date: 2020
 
 set -euxEo pipefail
