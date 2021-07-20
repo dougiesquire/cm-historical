@@ -2,7 +2,7 @@
 
 #####################################################################
 # File: run_CAFE_forecasts.sh.in
-# Author: Vassili Kitsios adapted from Paul Sandery adapted from Pavel Sakov
+# Author: Dougie Squire adapted from Vassili Kitsios adapted from Paul Sandery adapted from Pavel Sakov
 # Created: 2020
 # Purpose: input for BASH script for running CM21 forecasts on Gadi and Magnus
 # Description: the launching script lauch.sh converts this script into run_CAFE_forecasts.sh using settings from settings.sh
