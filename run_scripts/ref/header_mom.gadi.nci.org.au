@@ -10,5 +10,5 @@
 ##PBS -P v14
 #PBS -P xv83
 ##PBS -P ux06
-#PBS -l jobfs=800GB
+#PBS -l jobfs=400GB
 #PBS -N JOBNAME_INPUT
