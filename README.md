@@ -13,6 +13,7 @@ We currently have no such baseline for the CAFE forecast, which makes skill asse
  - `hist_mem001.ipynb` : premliminary inspection/investigation of the single member historical and control runs to check that everything is going as expected
  - `hist.ipynb` : premliminary inspection/investigation of the 96 member historical run on Gadi to check that everything is going as expected
  - `ctrl.ipynb` : premliminary inspection/investigation of the 20 member control run on Pawsey to check that everything is going as expected
+ - `complete_MERGE_step.ipynb` : notebook for picking and completing up MERGE step when it is cut short by walltime limit
 
 #### `resources/` : copies of (small) files used in the notebooks in this repo, saved such that their original location is clear
 
